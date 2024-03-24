@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+engines/.vs/engines.vc15/v15/.suo
+*.db
+*.opendb
+*.db-shm
+*.db-wal
+*.log
+*.pdb
+*.ilk
+*.tlog
+*.idb
