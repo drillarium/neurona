@@ -1,0 +1,6 @@
+﻿  SDLRenderer.cpp
+  engine.cpp
+c:\projects\avio\neurona\engines\deps\common\shmhelper.h(22): warning C4200: se ha utilizado una extensión no estándar: matriz de tamaño cero en struct/union
+  c:\projects\avio\neurona\engines\deps\common\shmhelper.h(22): note: Un constructor con valor predeterminado o un operador de asignación de copia o movimiento ignorará a este miembro.
+  Generando código...
+  ffmpeg-input.vc15.vcxproj -> C:\Projects\avio\neurona\engines\ffmpeg-input\x64\Debug\ffmpeg-input.exe

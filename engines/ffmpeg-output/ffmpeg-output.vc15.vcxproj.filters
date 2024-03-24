@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\deps\common\main.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\common\SDLRenderer.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\common\shmhelper.linux.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\common\shmhelper.win.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\common\sm_consumer.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\common\FFMPEG_sm_consumer.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\engine.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\base64.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\notifier.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\clock.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\sync_clock.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\SDLRenderer.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\shmhelper.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\FFMPEG_sm_element.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\sm_consumer.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\common\FFMPEG_sm_consumer.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
