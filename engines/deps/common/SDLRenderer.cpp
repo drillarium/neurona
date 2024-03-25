@@ -61,7 +61,7 @@ bool SDLRenderer::init(const char *_title, int _width, int _height, int _fontSiz
     return false;
   }
 
-  font_ = TTF_OpenFont("./Montserrat-Regular.ttf", _fontSize);
+  font_ = TTF_OpenFont("../deps/common/Montserrat-Regular.ttf", _fontSize);
   if(!font_)
   {
     notifyError("Font loading failed: %s", TTF_GetError());
