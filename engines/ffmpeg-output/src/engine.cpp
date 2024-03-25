@@ -6,6 +6,7 @@
 #include "sync_clock.h"
 #include "SDLRenderer.h"
 #include "FFMPEG_sm_consumer.h"
+#include "FFMPEG_utils.h"
 
 using namespace std::chrono_literals;
 
@@ -116,41 +117,6 @@ bool FFMPEGOutputEngine::putCommand(const char *_JsonCommand)
   return true;
 }
 
-void drawBackground(uint8_t *_buffer, int _width, int _height, int _lineSize,  AVPixelFormat _pixFmt)
-{
-  int bitsPerPixel = av_get_bits_per_pixel(av_pix_fmt_desc_get(_pixFmt));
-  int bytesPerPixel = (bitsPerPixel + 7) / 8;
-
-  for(int y = 0; y < _height; ++y)
-  {
-    for(int x = 0; x < _width * bytesPerPixel; x += bytesPerPixel)
-    {
-      _buffer[y * _lineSize + x] = 0;
-      _buffer[y * _lineSize + x + 1] = 0;
-      _buffer[y * _lineSize + x + 2] = 0;
-    }
-  }
-}
-
-void drawLine(uint8_t *_buffer, int _width, int _height, int _lineSize, AVPixelFormat _pixFmt, int64_t _frameNum, AVRational _timeBase)
-{
-  int bitsPerPixel = av_get_bits_per_pixel(av_pix_fmt_desc_get(_pixFmt));
-  int bytesPerPixel = (bitsPerPixel + 7) / 8;
-
-  double fps = (double) _timeBase.den / _timeBase.num;
-  int fpw = (int) (fps * 5);
-  int fnum = (int) (_frameNum % fpw);
-  int linePosition = (_width * fnum) / fpw;
-
-  // Draw a vertical white line
-  for(int y = 0; y < _height; ++y)
-  {
-    _buffer[y * _lineSize + linePosition * 3] = 255;
-    _buffer[y * _lineSize + linePosition * 3 + 1] = 0;
-    _buffer[y * _lineSize + linePosition * 3 + 2] = 0;
-  }
-}
-
 // run. Main thread generates black and silence while stream does not generate AVsamples
 bool FFMPEGOutputEngine::run(const char *_JsonConfig)
 {
@@ -203,12 +169,14 @@ bool FFMPEGOutputEngine::run(const char *_JsonConfig)
   // uint8_t *audioBuffer = (uint8_t *) av_malloc(audioBufferSize);
   // av_samples_fill_arrays(audioFrame->data, audioFrame->linesize, audioBuffer, channels, audioSamplesPerFrame, sampleFmt, 0);
 
+  UID_ = "TEST_OUTPUT";
+
   int64_t frameCount = 0;
   SyncClock clock;
 
   // renderer
   SDLRenderer renderer;
-  renderer.init("Output", 320, 240);
+  renderer.init(UID_.c_str());
 
   while(!abort_)
   {
@@ -228,7 +196,7 @@ bool FFMPEGOutputEngine::run(const char *_JsonConfig)
 
     /* buffer consumer */
     AVFrameExt *frameExtInput = pop();
-    if (frameExtInput)
+    if(frameExtInput)
     {
       frameExt.copy(frameExtInput);
     }
@@ -236,9 +204,8 @@ bool FFMPEGOutputEngine::run(const char *_JsonConfig)
     renderer.render(frameExt.AVFrame);
 
     // sync
-    int numFields = frameExt.fieldOrder <= AV_FIELD_PROGRESSIVE ? 1 : 2;
-    long long frameDuration = (frameExt.AVFrame->duration * (frameExt.timeBase.num * 10000000LL) / frameExt.timeBase.den) * numFields;
-    clock.sync(frameDuration);
+    long long frd = frameDuration(&frameExt);
+    clock.sync(frd);
 
     if(frameExtInput)
     {
@@ -266,11 +233,13 @@ void FFMPEGOutputEngine::workerThreadFunc()
 {
   FFMPEGSharedMemoryConsumer smc;
 
+  srcUID_ = "TEST_INPUT";
+
   while(!abort_)
   {
     if(!smc.opened())
     {
-      smc.init("TEST");
+      smc.init(srcUID_.c_str());
     }
     if(smc.opened())
     {

@@ -2,6 +2,7 @@
 #include "FFMPEG_sm_element.h"
 #include "clock.h"
 #include "notifier.h"
+#include "FFMPEG_utils.h"
 
 FFMPEGSharedMemoryConsumer::FFMPEGSharedMemoryConsumer()
 :SharedMemoryConsumer()
@@ -78,13 +79,13 @@ AVFrameExt * FFMPEGSharedMemoryConsumer::read()
         videoFrame->format = fe->format;
         videoFrame->duration = fe->duration;
         const unsigned char *videoBuffer = (const unsigned char *) (fe + 1);
-        av_image_fill_arrays(videoFrame->data, videoFrame->linesize, videoBuffer, (AVPixelFormat) videoFrame->format, videoFrame->width, videoFrame->height, 1);
-      }
+        av_image_fill_arrays(videoFrame->data, videoFrame->linesize, videoBuffer, (AVPixelFormat) videoFrame->format, videoFrame->width, videoFrame->height, 32);      
 
-      ret = new AVFrameExt();
-      ret->timeBase = fe->timebase;
-      ret->AVFrame = videoFrame;
-      ret->fieldOrder = fe->fieldOrder;
+        ret = new AVFrameExt();
+        ret->timeBase = fe->timebase;
+        ret->AVFrame = frameDeepClone(videoFrame);
+        ret->fieldOrder = fe->fieldOrder;
+      }
     }
   }
 

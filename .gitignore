@@ -44,3 +44,4 @@ engines/ffmpeg-input/ffmpeg-input.vc15.vcxproj.user
 engines/ffmpeg-output/ffmpeg-output.vc15.vcxproj.user
 engines/sdl-mixer/sdl-mixer.vc15.vcxproj.user
 engines/sdl-renderer/sdl-renderer.vc15.vcxproj.user
+*.ipch

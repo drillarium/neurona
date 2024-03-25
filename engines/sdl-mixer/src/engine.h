@@ -17,17 +17,18 @@ public:
 
 protected:
   bool push(int _index, AVFrameExt *_frame);
-  AVFrameExt * pop(int _index, long long timeout = -1);
+  AVFrameExt * pop(int _index, long long timeout = 0);
   void workerThreadFunc(int _index);
 
 protected:
+  std::string UID_;
   bool abort_ = false;                   // abort flag
   bool configure_ = false;
   std::string nextConfiguration_;
   std::string currentConfiguration_;
   std::vector<bool> configureProducer_;
-  std::vector<std::list<AVFrameExt *>> frameBuffer_;  // frame buffer
-  std::vector<std::mutex> frameBufferMutex_;          // mutex
+  std::vector<std::list<AVFrameExt *>> frameBuffer_;  // frame buffer per producer
+  std::vector<std::mutex> frameBufferMutex_;          // mutex per producer
   int maxBufferSize_ = 2;                             // max buffer size
   int timeoutOpen_ = 5;                               // in seconds
 };

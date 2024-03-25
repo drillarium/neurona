@@ -26,6 +26,12 @@ __inline void free_AVFrameExt(AVFrameExt **_AVFrameExt)
   *_AVFrameExt = nullptr;
 }
 
+__inline long long frameDuration(AVFrameExt *_frame)
+{
+  int numFields = _frame->fieldOrder <= AV_FIELD_PROGRESSIVE ? 1 : 2;
+  return (long long) ((_frame->AVFrame->duration * (_frame->timeBase.num * 10000000LL) / _frame->timeBase.den) * numFields);
+}
+
 struct SMElement
 {
   int size;                           // sizeof struct

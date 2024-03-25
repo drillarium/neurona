@@ -21,6 +21,8 @@ protected:
   void workerThreadFunc();
 
 protected:
+  std::string UID_;
+  std::string srcUID_;
   bool abort_ = false;                   // abort flag
   std::list<AVFrameExt *> frameBuffer_;  // frame buffer
   std::mutex frameBufferMutex_;          // mutex

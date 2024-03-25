@@ -67,5 +67,8 @@
     <ClInclude Include="..\deps\common\FFMPEG_sm_producer.h">
       <Filter>Header files</Filter>
     </ClInclude>
+    <ClInclude Include="..\deps\common\SDL_utils.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

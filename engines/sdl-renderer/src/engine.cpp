@@ -10,6 +10,7 @@
 #include "sync_clock.h"
 #include "SDLRenderer.h"
 #include "FFMPEG_sm_producer.h"
+#include "SDL_utils.h"
 
 using namespace std::chrono_literals;
 
@@ -127,67 +128,6 @@ const int BLUE = 255;
 const int NUM_FONT_SIZE = 20;
 const int NUM_OFFSET = 20;
 
-void drawPixel(SDL_Surface* surface, int x, int y, Uint32 color)
-{
-  if (x >= 0 && x < surface->w && y >= 0 && y < surface->h)
-  {
-    Uint32* pixels = static_cast<Uint32*>(surface->pixels);
-    pixels[y * surface->w + x] = color;
-  }
-}
-
-void drawLine(SDL_Surface *_surface, int _x1, int _y1, int _x2, int _y2, Uint32 _color)
-{
-  int dx = std::abs(_x2 - _x1);
-  int dy = std::abs(_y2 - _y1);
-  int sx = (_x1 < _x2) ? 1 : -1;
-  int sy = (_y1 < _y2) ? 1 : -1;
-  int err = dx - dy;
-
-  while (_x1 != _x2 || _y1 != _y2)
-  {
-    drawPixel(_surface, _x1, _y1, _color);
-    int e2 = 2 * err;
-    if (e2 > -dy)
-    {
-      err -= dy;
-      _x1 += sx;
-    }
-    if (e2 < dx) {
-      err += dx;
-      _y1 += sy;
-    }
-  }
-}
-
-void drawCircle(SDL_Surface *_surface, int _centerX, int _centerY, int _radius, Uint32 _color)
-{
-  int x = _radius;
-  int y = 0;
-  int err = 0;
-
-  while (x >= y)
-  {
-    drawPixel(_surface, _centerX + x, _centerY + y, _color);
-    drawPixel(_surface, _centerX - x, _centerY + y, _color);
-    drawPixel(_surface, _centerX + x, _centerY - y, _color);
-    drawPixel(_surface, _centerX - x, _centerY - y, _color);
-    drawPixel(_surface, _centerX + y, _centerY + x, _color);
-    drawPixel(_surface, _centerX - y, _centerY + x, _color);
-    drawPixel(_surface, _centerX + y, _centerY - x, _color);
-    drawPixel(_surface, _centerX - y, _centerY - x, _color);
-
-    if (err <= 0) {
-      y += 1;
-      err += 2 * y + 1;
-    }
-    if (err > 0) {
-      x -= 1;
-      err -= 2 * x + 1;
-    }
-  }
-}
-
 void drawClock(SDL_Surface *_surface, TTF_Font *_font, int _hour, int _minute, int _second)
 {
   // Clear screen
@@ -263,15 +203,6 @@ bool SDLRendererEngine::run(const char *_JsonConfig)
     return false;
   }
 
-  // Create surface
-  SDL_Surface *surface = SDL_CreateRGBSurface(0, CLOCK_WIDTH, CLOCK_HEIGHT, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
-  if(!surface)
-  {
-    notifyError("Surface could not be created! SDL_Error: %s", SDL_GetError());
-    SDL_Quit();
-    return 1;
-  }
-
   if(TTF_Init() == -1)
   {
     notifyError("SDL_ttf initialization failed: %s", TTF_GetError());
@@ -309,16 +240,27 @@ bool SDLRendererEngine::run(const char *_JsonConfig)
   uint8_t *videoBuffer = (uint8_t *) av_malloc(videoBufferSize);
   av_image_fill_arrays(videoFrame->data, videoFrame->linesize, videoBuffer, pixFmt, CLOCK_WIDTH, CLOCK_HEIGHT, 1);
 
+  // Create surface
+  SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(videoFrame->data[0], videoFrame->width, videoFrame->height, 32, videoFrame->linesize[0], 0, 0, 0, 0);
+  if(!surface)
+  {
+    notifyError("Surface could not be created! SDL_Error: %s", SDL_GetError());
+    SDL_Quit();
+    return 1;
+  }
+
   int64_t frameCount = 0;
   SyncClock clock;
 
+  UID_ = "CLOCK";
+
   // renderer
   SDLRenderer renderer;
-  renderer.init("clock", CLOCK_WIDTH, CLOCK_HEIGHT);
+  renderer.init(UID_.c_str(), CLOCK_WIDTH, CLOCK_HEIGHT);
 
   // sm protocol
   FFMPEGSharedMemoryProducer sm;
-  sm.init("TEST");
+  sm.init(UID_.c_str());
 
   while(!abort_)
   {
@@ -333,10 +275,6 @@ bool SDLRendererEngine::run(const char *_JsonConfig)
     // Draw clock
     drawClock(surface, font, hour, minute, second);
 
-    // Access pixel data from the surface
-    uint32_t *pixels = static_cast<uint32_t *>(surface->pixels);
-    memcpy(videoBuffer, pixels, videoBufferSize);
-
     videoFrame->pts = frameCount;
     videoFrame->duration = av_rescale_q(1, videoTimeBase, videoTimeBase);
     frameCount++;
@@ -350,9 +288,8 @@ bool SDLRendererEngine::run(const char *_JsonConfig)
     renderer.render(frameExt.AVFrame);
 
     // sync
-    int numFields = frameExt.fieldOrder <= AV_FIELD_PROGRESSIVE ? 1 : 2;
-    long long frameDuration = (frameExt.AVFrame->duration * (frameExt.timeBase.num * 10000000LL) / frameExt.timeBase.den) * numFields;
-    clock.sync(frameDuration);
+    long long frd = frameDuration(&frameExt);
+    clock.sync(frd);
   }
 
   renderer.cleanUp();

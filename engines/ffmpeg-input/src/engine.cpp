@@ -213,9 +213,8 @@ bool FFMPEGInputEngine::run(const char *_JsonConfig)
     renderer.render(frameExt.AVFrame);
 
     // sync
-    int numFields = frameExt.fieldOrder <= AV_FIELD_PROGRESSIVE? 1 : 2;
-    long long frameDuration = (frameExt.AVFrame->duration * (frameExt.timeBase.num * 10000000LL) / frameExt.timeBase.den) * numFields;
-    clock.sync(frameDuration);
+    long long frd = frameDuration(&frameExt);
+    clock.sync(frd);
 
     if(frameExtInput)
     {
@@ -350,7 +349,7 @@ void FFMPEGInputEngine::workerThreadFunc()
 
             // push frame
             AVFrameExt *frameExt = new AVFrameExt;
-            frameExt->AVFrame = av_frame_clone(frame);
+            frameExt->AVFrame = frameDeepClone(frame);
             frameExt->timeBase = formatCtx->streams[videoStreamIndex]->time_base;
             frameExt->fieldOrder = formatCtx->streams[videoStreamIndex]->codecpar->field_order;
             push(frameExt);

@@ -16,5 +16,6 @@ public:
   bool run(const char *_JsonConfig);
 
 protected:
+  std::string UID_;
   bool abort_ = false;                   // abort flag
 };

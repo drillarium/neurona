@@ -36,6 +36,7 @@
     <ClInclude Include="..\deps\common\FFMPEG_sm_element.h" />
     <ClInclude Include="..\deps\common\FFMPEG_sm_producer.h" />
     <ClInclude Include="..\deps\common\SDLRenderer.h" />
+    <ClInclude Include="..\deps\common\SDL_utils.h" />
     <ClInclude Include="..\deps\common\shmhelper.h" />
     <ClInclude Include="..\deps\common\sm_producer.h" />
     <ClInclude Include="..\deps\common\sync_clock.h" />

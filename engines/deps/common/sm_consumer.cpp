@@ -32,7 +32,7 @@ bool SharedMemoryConsumer::deinit()
 bool SharedMemoryConsumer::read(unsigned char **_data)
 {
   // nothing to read
-  if(smHandle_.rb->wseq == 0)
+  if(smHandle_.rb->wseq <= 0)
   {
     return false;
   }

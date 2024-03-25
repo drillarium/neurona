@@ -61,6 +61,9 @@ __inline AVFrame * frameConvert(AVFrame *_frame, int _width = -1, int _height = 
   // Free the SwsContext
   sws_freeContext(swsContext);
 
+  frame->width = width;
+  frame->height = height;
+
   return frame;
 }
 
@@ -68,4 +71,22 @@ __inline void frameFree(AVFrame *_frame)
 {
   av_freep(&_frame->data[0]);
   av_frame_free(&_frame);
+}
+
+__inline AVFrame * frameDeepClone(AVFrame *_frame)
+{
+  AVFrame *copyFrame = av_frame_alloc();
+  if(copyFrame)
+  {
+    copyFrame->format = _frame->format;
+    copyFrame->width = _frame->width;
+    copyFrame->height = _frame->height;
+    copyFrame->ch_layout = _frame->ch_layout;
+    copyFrame->nb_samples = _frame->nb_samples;
+    av_frame_get_buffer(copyFrame, 32);
+    av_frame_copy(copyFrame, _frame);
+    av_frame_copy_props(copyFrame, _frame);
+  }
+
+  return copyFrame;
 }

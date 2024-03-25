@@ -13,6 +13,7 @@
 #include "SDLRenderer.h"
 #include "FFMPEG_sm_producer.h"
 #include "FFMPEG_sm_consumer.h"
+#include "FFMPEG_utils.h"
 
 using namespace std::chrono_literals;
 
@@ -167,43 +168,6 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
-AVFrame * convertFrameToRGB(AVFrame *_frame, int _width, int _height)
-{
-  AVPixelFormat pixelFormat = AV_PIX_FMT_RGB24;
-  int bitsPerPixel = av_get_bits_per_pixel(av_pix_fmt_desc_get(pixelFormat));
-  int bytesPerPixel = (bitsPerPixel + 7) / 8;
-
-  // create
-  AVFrame *rgbFrame = av_frame_alloc();
-  uint8_t *buffer = (uint8_t *) av_malloc(av_image_get_buffer_size(pixelFormat, _width, _height, 1));
-  av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, buffer, pixelFormat, _width, _height, 1);
-  rgbFrame->width = _width;
-  rgbFrame->height = _height;
-  rgbFrame->format = pixelFormat;
-
-  // Create SwsContext for converting pixel formats
-  SwsContext* swsContext = sws_getContext(_width, _height, static_cast<AVPixelFormat>(_frame->format), _width, _height, pixelFormat, SWS_BICUBIC, nullptr, nullptr, nullptr);
-  if(!swsContext)
-  {
-    std::cerr << "Failed to create SwsContext" << std::endl;
-    return nullptr;
-  }
-
-  // Perform color conversion
-  sws_scale(swsContext, _frame->data, _frame->linesize, 0, _height, rgbFrame->data, rgbFrame->linesize);
-
-  // Free the SwsContext
-  sws_freeContext(swsContext);
-
-  return rgbFrame;
-}
-
-void freeRGBFrame(AVFrame *_frame)
-{
-  av_freep(&_frame->data[0]);
-  av_frame_free(&_frame);
-}
-
 // run. Main thread generates black and silence while stream does not generate AVsamples
 bool SDLMixerEngine::run(const char *_JsonConfig)
 {
@@ -236,16 +200,18 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
   int64_t frameCount = 0;
   SyncClock clock;
 
+  UID_ = "MIXER";
+
   // renderer
   SDLRenderer renderer;
-  renderer.init("clock", 320, 240);
+  renderer.init(UID_.c_str());
 
   // sm protocol
   FFMPEGSharedMemoryProducer sm;
-  sm.init("TEST____");
+  sm.init(UID_.c_str());
 
   // producer threads
-  int numInputs = 1;
+  int numInputs = 4;
   std::vector<std::thread> producerThread;
 
   // FOR TESTING
@@ -261,13 +227,6 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
       height;
       videoTimeBase;
       numInputs;
-
-      // Create surface
-      if(surface)
-      {
-        SDL_FreeSurface(surface);
-      }
-      surface = SDL_CreateRGBSurface(0, width, height, 24, 0, 0, 0, 0);
 
       // FFMPEG
       if(videoFrame)
@@ -286,8 +245,15 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
       videoBuffer = (uint8_t *) av_malloc(videoBufferSize);
       av_image_fill_arrays(videoFrame->data, videoFrame->linesize, videoBuffer, pixFmt, width, height, 1);
 
+      // Create surface
+      if(surface)
+      {
+        SDL_FreeSurface(surface);
+      }
+      surface = SDL_CreateRGBSurfaceFrom(videoFrame->data[0], videoFrame->width, videoFrame->height, 24, videoFrame->linesize[0], 0, 0, 0, 0);
+
       // threads
-      std::vector<std::mutex> list(std::max(producerThread.size(), (size_t)numInputs));
+      std::vector<std::mutex> list(std::max(producerThread.size(), (size_t) numInputs));
       frameBufferMutex_.swap(list);
       for(size_t i = producerThread.size(); i < numInputs; i++)
       {
@@ -309,13 +275,19 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
       configure_ = false;
     }
 
+    // clear surface
+
+    //
+    int w = 1920 >> 1;
+    int h = 1080 >> 1;
+
     // check inputs
     for(int i = 0; i < numInputs; i++)
     {
       AVFrameExt *frameExtInput = pop(i);
       if(frameExtInput)
       {        
-        AVFrame *frame = convertFrameToRGB(frameExtInput->AVFrame, frameExtInput->AVFrame->width, frameExtInput->AVFrame->height);
+        AVFrame *frame = frameConvert(frameExtInput->AVFrame, w, h, AV_PIX_FMT_RGB24);
 
         // compose 
         // SDL_Surface *inputSurface = SDL_CreateRGBSurface(0, frame->width, frame->height, 24, 0, 0, 0, 0);
@@ -325,8 +297,8 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
         SDL_Surface *inputSurface = SDL_CreateRGBSurfaceFrom(frame->data[0], frame->width, frame->height, 24, frame->linesize[0] , 0, 0, 0, 0);
 
         // Set the position where surface2 will be drawn on surface1
-        int x = 100;
-        int y = 100;
+        int x = 0; if(i==1 || i==3) x = w;
+        int y = 0; if(i==2 || i==3) y = h;
 
         // Blit surface2 onto surface1 at the specified position
         SDL_Rect srcRect = { 0, 0, inputSurface->w, inputSurface->h };
@@ -337,16 +309,12 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
         SDL_FreeSurface(inputSurface);
 
         // release
-        freeRGBFrame(frame);
+        frameFree(frame);
 
         // release
         free_AVFrameExt(&frameExtInput);
       }
     }
-
-    // Access pixel data from the surface
-    uint32_t *pixels = static_cast<uint32_t *>(surface->pixels);
-    memcpy(videoBuffer, pixels, videoBufferSize);
 
     videoFrame->pts = frameCount;
     videoFrame->duration = av_rescale_q(1, videoTimeBase, videoTimeBase);
@@ -358,9 +326,8 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     renderer.render(frameExt.AVFrame);
 
     // sync
-    int numFields = frameExt.fieldOrder <= AV_FIELD_PROGRESSIVE ? 1 : 2;
-    long long frameDuration = (frameExt.AVFrame->duration * (frameExt.timeBase.num * 10000000LL) / frameExt.timeBase.den) * numFields;
-    clock.sync(frameDuration);
+    long long frd = frameDuration(&frameExt);
+    clock.sync(frd);
   }
 
   renderer.cleanUp();
@@ -388,7 +355,7 @@ void SDLMixerEngine::workerThreadFunc(int _index)
       smc.deinit();
 
       // open 
-      smc.init("TEST");
+      smc.init("TEST_INPUT");
 
       // configured
       configureProducer_[_index] = false;
@@ -451,7 +418,7 @@ AVFrameExt * SDLMixerEngine::pop(int _index, long long timeout)
       }
     }
   }
-  while(!frame && remaining >= 0);
+  while(!frame && remaining > 0);
 
   return frame;
 }
