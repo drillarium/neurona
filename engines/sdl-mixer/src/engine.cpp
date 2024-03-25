@@ -186,6 +186,14 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     return false;
   }
 
+  TTF_Font *font = TTF_OpenFont("../deps/common/Montserrat-Regular.ttf", 50);
+  if(!font)
+  {
+    notifyError("Font loading failed: %s", TTF_GetError());
+    SDL_Quit();
+    return false;
+  }
+
   // surfaces
   int width = 1920;
   int height = 1080;
@@ -197,6 +205,7 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
   int videoBufferSize = 0;
   uint8_t *videoBuffer = NULL;
 
+  // 
   int64_t frameCount = 0;
   SyncClock clock;
 
@@ -276,29 +285,25 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     }
 
     // clear surface
-
-    //
-    int w = 1920 >> 1;
-    int h = 1080 >> 1;
+    SDL_FillRect(surface, NULL, 0x00000000);
 
     // check inputs
     for(int i = 0; i < numInputs; i++)
     {
+      // Set the position where surface2 will be drawn on surface1
+      int w = 1920 >> 1;
+      int h = 1080 >> 1;
+      int x = 0; if (i == 1 || i == 3) x = w;
+      int y = 0; if (i == 2 || i == 3) y = h;
+
       AVFrameExt *frameExtInput = pop(i);
       if(frameExtInput)
       {        
-        AVFrame *frame = frameConvert(frameExtInput->AVFrame, w, h, AV_PIX_FMT_RGB24);
+        // convert and scale
+        AVFrame *frame = frameConvert(frameExtInput->AVFrame, w, h, pixFmt);
 
-        // compose 
-        // SDL_Surface *inputSurface = SDL_CreateRGBSurface(0, frame->width, frame->height, 24, 0, 0, 0, 0);
-
-        // uint32_t *pixels = static_cast<uint32_t *>(inputSurface->pixels);
-        // memcpy(pixels, frame->data[0], frame->linesize[0] * frame->height);
+        // to surface
         SDL_Surface *inputSurface = SDL_CreateRGBSurfaceFrom(frame->data[0], frame->width, frame->height, 24, frame->linesize[0] , 0, 0, 0, 0);
-
-        // Set the position where surface2 will be drawn on surface1
-        int x = 0; if(i==1 || i==3) x = w;
-        int y = 0; if(i==2 || i==3) y = h;
 
         // Blit surface2 onto surface1 at the specified position
         SDL_Rect srcRect = { 0, 0, inputSurface->w, inputSurface->h };
@@ -308,12 +313,27 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
         // release
         SDL_FreeSurface(inputSurface);
 
-        // release
+        // release converted frame
         frameFree(frame);
 
-        // release
+        // release frame from input
         free_AVFrameExt(&frameExtInput);
       }
+
+      // title
+      std::string title = "INPUT #" + std::to_string(i + 1);
+      SDL_Color textColor = { 0xff, 0xff, 0xff, 0xff };
+      SDL_Surface *textSurface = TTF_RenderText_Solid(font, title.c_str(), textColor);      
+      SDL_Rect textRect = { x + (w >> 1) - (textSurface->w >> 1), y, textSurface->w, textSurface->h };
+      SDL_BlitSurface(textSurface, NULL, surface, &textRect);
+
+      SDL_FreeSurface(textSurface);
+
+      // vumeter
+
+      // metadata
+
+      // clock
     }
 
     videoFrame->pts = frameCount;
@@ -336,6 +356,7 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
   av_frame_free(&videoFrame);
   av_free(videoBuffer);
 
+  TTF_CloseFont(font);
   SDL_FreeSurface(surface);
   TTF_Quit();
   SDL_Quit();

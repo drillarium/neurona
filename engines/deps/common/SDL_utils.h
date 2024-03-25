@@ -2,12 +2,12 @@
 
 #include <SDL.h>
 
-void drawPixel(SDL_Surface* surface, int x, int y, Uint32 color)
+void drawPixel(SDL_Surface *_surface, int _x, int _y, Uint32 _color)
 {
-  if (x >= 0 && x < surface->w && y >= 0 && y < surface->h)
+  if(_x >= 0 && _x < _surface->w && _y >= 0 && _y < _surface->h)
   {
-    Uint32* pixels = static_cast<Uint32*>(surface->pixels);
-    pixels[y * surface->w + x] = color;
+    Uint32 *pixels = (Uint32 *) (_surface->pixels);
+    pixels[_y * _surface->w + _x] = _color;
   }
 }
 
