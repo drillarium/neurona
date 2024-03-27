@@ -21,7 +21,7 @@ __inline void drawBackground(uint8_t *_buffer, int _width, int _height, int _lin
   }
 }
 
-__inline void drawLine(uint8_t *_buffer, int _width, int _height, int _lineSize, AVPixelFormat _pixFmt, int64_t _frameNum, AVRational _timeBase, int _depth = 2, int _speed = 5, uint32_t _color = 0x00ffffff)
+__inline void drawLine(uint8_t *_buffer, int _x, int _y, int _width, int _height, int _lineSize, AVPixelFormat _pixFmt, int64_t _frameNum, AVRational _timeBase, int _depth = 2, int _speed = 5, uint32_t _color = 0x00ffffff)
 {
   int bitsPerPixel = av_get_bits_per_pixel(av_pix_fmt_desc_get(_pixFmt));
   int bytesPerPixel = (bitsPerPixel + 7) / 8;
@@ -32,15 +32,20 @@ __inline void drawLine(uint8_t *_buffer, int _width, int _height, int _lineSize,
   int linePosition = (_width * fnum) / fpw;
 
   // Draw a vertical white line
-  for(int y = 0; y < _height; ++y)
+  for(int y = _y; y < _y + _height; ++y)
   {
     for(int i = 0; i < _depth; i++)
     {
-      _buffer[y * _lineSize + (linePosition + (i + 1)) * bytesPerPixel] = (uint8_t) (_color & 0xff);
-      _buffer[y * _lineSize + (linePosition + (i + 1)) * bytesPerPixel + 1] = (uint8_t) ((_color & 0xff00) >> 8);
-      _buffer[y * _lineSize + (linePosition + (i + 1)) * bytesPerPixel + 2] = (uint8_t) ((_color & 0xff0000) >> 16);
+      _buffer[y * _lineSize + _x * bytesPerPixel + (linePosition + (i + 1)) * bytesPerPixel] = (uint8_t) (_color & 0xff);
+      _buffer[y * _lineSize + _x * bytesPerPixel + (linePosition + (i + 1)) * bytesPerPixel + 1] = (uint8_t) ((_color & 0xff00) >> 8);
+      _buffer[y * _lineSize + _x * bytesPerPixel + (linePosition + (i + 1)) * bytesPerPixel + 2] = (uint8_t) ((_color & 0xff0000) >> 16);
     }
   }
+}
+
+__inline void drawLine(uint8_t *_buffer, int _width, int _height, int _lineSize, AVPixelFormat _pixFmt, int64_t _frameNum, AVRational _timeBase, int _depth = 2, int _speed = 5, uint32_t _color = 0x00ffffff)
+{
+  drawLine(_buffer, 0, 0, _width, _height, _lineSize, _pixFmt, _frameNum, _timeBase, _depth, _speed, _color);
 }
 
 __inline AVFrame * frameConvert(AVFrame *_frame, int _width = -1, int _height = -1, AVPixelFormat _format = AV_PIX_FMT_RGB24)

@@ -236,6 +236,8 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
       height;
       videoTimeBase;
       numInputs;
+      fieldOrder;
+      pixFmt;
 
       // FFMPEG
       if(videoFrame)
@@ -286,6 +288,18 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
 
     // clear surface
     SDL_FillRect(surface, NULL, 0x00000000);
+
+    // draw lines
+    for(int i = 0; i < numInputs; i++)
+    {
+      // Set the position where surface2 will be drawn on surface1
+      int w = 1920 >> 1;
+      int h = 1080 >> 1;
+      int x = 0; if (i == 1 || i == 3) x = w;
+      int y = 0; if (i == 2 || i == 3) y = h;
+
+      drawLine(videoBuffer, x, y, w, h, videoFrame->linesize[0], pixFmt, frameCount, videoTimeBase);
+    }
 
     // check inputs
     for(int i = 0; i < numInputs; i++)
