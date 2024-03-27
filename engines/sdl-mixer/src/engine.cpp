@@ -104,6 +104,7 @@ struct SMultiviewerView
   int w = 0;
   int h = 0;
   std::string UID;
+  std::string name;
 };
 
 struct SMultiviewerVideoView : public SMultiviewerView
@@ -118,6 +119,7 @@ struct SMultiviewerCongif
   int height = 1080;
   AVRational timeBase = {1, 25};
   AVPixelFormat format = AV_PIX_FMT_RGB24;
+  AVFieldOrder fieldOrder = AV_FIELD_PROGRESSIVE;
   std::vector<SMultiviewerView *> viewer;
 };
 
@@ -126,6 +128,7 @@ const char WIDTH[] = "width";
 const char HEIGHT[] = "height";
 const char FR[] = "frame_rate";
 const char FORMAT[] = "format";
+const char FIELDO[] = "field_order";
 const char COMP[] = "components";
 const char TYPE[] = "type";
 const char POS[] = "position";
@@ -136,6 +139,7 @@ const char METADATA[] = "metadata";
 const char SHOW[] = "show";
 const char XPOS[] = "x";
 const char YPOS[] = "y";
+const char NAME[] = "name";
 
 AVRational parseFR(const char *_fr)
 {
@@ -177,6 +181,33 @@ AVPixelFormat strig2format(const char *_format)
   return AV_PIX_FMT_RGB24;
 }
 
+AVFieldOrder strig2fieldorder(const char *_field)
+{
+  if(!_stricmp(_field, "PROGRESSIVE"))
+  {
+    return AV_FIELD_PROGRESSIVE;
+  }
+  if(!_stricmp(_field, "FIELD_TT"))
+  {
+    return AV_FIELD_TT;
+  }
+  if(!_stricmp(_field, "FIELD_BB"))
+  {
+    return AV_FIELD_BB;
+  }
+  if(!_stricmp(_field, "FIELD_TB"))
+  {
+    return AV_FIELD_TB;
+  }
+  if(!_stricmp(_field, "FIELD_BT"))
+  {
+    return AV_FIELD_BT;
+  }
+
+  return AV_FIELD_PROGRESSIVE;
+}
+
+
 SMultiviewerCongif * parseMultiviewerConfig(const char *_JsonConfig)
 {
   rapidjson::Document d;
@@ -214,6 +245,11 @@ SMultiviewerCongif * parseMultiviewerConfig(const char *_JsonConfig)
   {
     std::string format_str = wl[FORMAT].GetString();
     mvc->format = strig2format(format_str.c_str());
+  }  
+  if(wl.HasMember(FIELDO) && wl[FIELDO].IsString())
+  {
+    std::string fieldorder_str = wl[FIELDO].GetString();
+    mvc->fieldOrder = strig2fieldorder(fieldorder_str.c_str());
   }
   if(wl.HasMember(COMP) && wl[COMP].IsArray())
   {
@@ -248,6 +284,12 @@ SMultiviewerCongif * parseMultiviewerConfig(const char *_JsonConfig)
         {
           mvv->UID = (*it)[SOURCE].GetString();
         }
+        
+        // name
+        if(it->HasMember(NAME))
+        {
+          mvv->name = (*it)[NAME].GetString();
+        }
 
         // size
         if(it->HasMember(SIZE))
@@ -263,44 +305,82 @@ SMultiviewerCongif * parseMultiviewerConfig(const char *_JsonConfig)
   return mvc;
 }
 
+void free_config(SMultiviewerCongif *_config)
+{
+  for(int i = 0; _config->viewer.size(); i++)
+  {
+    delete _config->viewer[i];
+  }
+  _config->viewer.clear();
+
+  delete _config;
+}
+
 const char DEFAULT_CONFIG[] = "{\
 \"window_layout\": {\
   \"width\": 1920,\
   \"height\" : 1080,\
   \"frame_rate\" : \"25/1\",\
+  \"field_order\" : \"PROGRESSIVE\",\
   \"format\" : \"ARGB\",\
   \"components\" : [\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 0, \"y\" : 0 },\
-        \"size\" : { \"width\": 960, \"height\" : 540 },\
+        \"size\" : { \"width\": 480, \"height\" : 540 },\
         \"source\" : \"video_source_1.mp4\",\
-        \"vumeter\":\
-          {\
-            \"show\": \"true\"\
-          },\
-        \"metadata\":\
-          {\
-          }\
+        \"name\" : \"Input#1\"\
       },\
       {\
         \"type\": \"graphic\",\
+        \"position\" : { \"x\": 480, \"y\" : 0 },\
+        \"size\" : { \"width\": 480, \"height\" : 540 },\
+        \"source\" : \"graphic_image.png\",\
+        \"name\" : \"Input#2\"\
+      },\
+      {\
+        \"type\": \"video\",\
         \"position\" : { \"x\": 960, \"y\" : 0 },\
-        \"size\" : { \"width\": 960, \"height\" : 540 },\
-        \"source\" : \"graphic_image.png\"\
+        \"size\" : { \"width\": 480, \"height\" : 540 },\
+        \"source\" : \"video_source_2.mp4\",\
+        \"name\" : \"Input#3\"\
+      },\
+      {\
+        \"type\": \"graphic\",\
+        \"position\" : { \"x\": 1440, \"y\" : 0 },\
+        \"size\" : { \"width\": 480, \"height\" : 540 },\
+        \"source\" : \"graphic_image_2.png\",\
+        \"format\" : \"png\",\
+        \"name\" : \"Input#4\"\
       },\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 0, \"y\" : 540 },\
-        \"size\" : { \"width\": 960, \"height\" : 540 },\
-        \"source\" : \"video_source_2.mp4\"\
+        \"size\" : { \"width\": 480, \"height\" : 540 },\
+        \"source\" : \"video_source_1.mp4\",\
+        \"name\" : \"Input#5\"\
       },\
       {\
         \"type\": \"graphic\",\
+        \"position\" : { \"x\": 480, \"y\" : 540 },\
+        \"size\" : { \"width\": 480, \"height\" : 540 },\
+        \"source\" : \"graphic_image.png\",\
+        \"name\" : \"Input#6\"\
+      },\
+      {\
+        \"type\": \"video\",\
         \"position\" : { \"x\": 960, \"y\" : 540 },\
-        \"size\" : { \"width\": 960, \"height\" : 540 },\
+        \"size\" : { \"width\": 480, \"height\" : 540 },\
+        \"source\" : \"video_source_2.mp4\",\
+        \"name\" : \"Input#7\"\
+      },\
+      {\
+        \"type\": \"graphic\",\
+        \"position\" : { \"x\": 1440, \"y\" : 540 },\
+        \"size\" : { \"width\": 480, \"height\" : 540 },\
         \"source\" : \"graphic_image_2.png\",\
-        \"format\" : \"png\"\
+        \"format\" : \"png\",\
+        \"name\" : \"Input#8\"\
       }\
     ]\
   }\
@@ -366,12 +446,7 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     return false;
   }
 
-  // surfaces
-  int width = 1920;
-  int height = 1080;
-  AVRational videoTimeBase = { 1, 25 };
-  AVFieldOrder fieldOrder = AV_FIELD_PROGRESSIVE;
-  AVPixelFormat pixFmt = AV_PIX_FMT_RGB24;
+  // surface
   SDL_Surface *surface = nullptr;
   AVFrame *videoFrame = nullptr;
   int videoBufferSize = 0;
@@ -392,101 +467,102 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
   sm.init(UID_.c_str());
 
   // producer threads
-  int numInputs = 4;
   std::vector<std::thread> producerThread;
 
-  // FOR TESTING
+  // initialize configuration
   nextConfiguration_ = DEFAULT_CONFIG;
   configure_ = true;
+  SMultiviewerCongif *config = NULL;
 
   while(!abort_)
   {
     if(configure_)
-    {
-      // TODO: read parameters
-      width;
-      height;
-      videoTimeBase;
-      numInputs;
-      fieldOrder;
-      pixFmt;
+    {     
+      SMultiviewerCongif *nextConfig = parseMultiviewerConfig(nextConfiguration_.c_str());
+      if(nextConfig)
+      {
+        // FFMPEG
+        if(videoFrame)
+        {
+          av_frame_free(&videoFrame);
+        }
+        videoFrame = av_frame_alloc();
+        videoFrame->width = nextConfig->width;
+        videoFrame->height = nextConfig->height;
+        videoFrame->format = nextConfig->format;
+        videoBufferSize = av_image_get_buffer_size(nextConfig->format, nextConfig->width, nextConfig->height, 1);
+        if(videoBuffer)
+        {
+          av_free(videoBuffer);
+        }
+        videoBuffer = (uint8_t *) av_malloc(videoBufferSize);
+        av_image_fill_arrays(videoFrame->data, videoFrame->linesize, videoBuffer, nextConfig->format, nextConfig->width, nextConfig->height, 1);
 
-      // FFMPEG
-      if(videoFrame)
-      {
-        av_frame_free(&videoFrame);
-      }
-      videoFrame = av_frame_alloc();
-      videoFrame->width = width;
-      videoFrame->height = height;
-      videoFrame->format = pixFmt;
-      videoBufferSize = av_image_get_buffer_size(pixFmt, width, height, 1);
-      if(videoBuffer)
-      {
-        av_free(videoBuffer);
-      }
-      videoBuffer = (uint8_t *) av_malloc(videoBufferSize);
-      av_image_fill_arrays(videoFrame->data, videoFrame->linesize, videoBuffer, pixFmt, width, height, 1);
+        // Create surface
+        if(surface)
+        {
+          SDL_FreeSurface(surface);
+        }
+        surface = SDL_CreateRGBSurfaceFrom(videoFrame->data[0], videoFrame->width, videoFrame->height, 24, videoFrame->linesize[0], 0, 0, 0, 0);
 
-      // Create surface
-      if(surface)
-      {
-        SDL_FreeSurface(surface);
-      }
-      surface = SDL_CreateRGBSurfaceFrom(videoFrame->data[0], videoFrame->width, videoFrame->height, 24, videoFrame->linesize[0], 0, 0, 0, 0);
+        // threads
+        std::vector<std::mutex> list(std::max(producerThread.size(), nextConfig->viewer.size()));
+        frameBufferMutex_.swap(list);
+        for(size_t i = producerThread.size(); i < nextConfig->viewer.size(); i++)
+        {
+          configureProducer_.push_back(true);
+          frameBuffer_.push_back(std::list<AVFrameExt *>());        
+          producerThread.push_back(std::thread([&, i] {
+            workerThreadFunc((int) i);
+          }));       
+        }
+        // 
+        for(size_t i = 0; i < producerThread.size(); i++)
+        {
+          configureProducer_[i] = true;
+        }
 
-      // threads
-      std::vector<std::mutex> list(std::max(producerThread.size(), (size_t) numInputs));
-      frameBufferMutex_.swap(list);
-      for(size_t i = producerThread.size(); i < numInputs; i++)
-      {
-        configureProducer_.push_back(true);
-        frameBuffer_.push_back(std::list<AVFrameExt *>());        
-        producerThread.push_back(std::thread([&, i] {
-          workerThreadFunc((int) i);
-        }));       
+        // already configured
+        if(config)
+        {
+          free_config(config);
+        }
+        config = nextConfig;
+        currentConfiguration_ = nextConfiguration_;
+        nextConfiguration_.clear();
+        configure_ = false;
       }
-      // 
-      for(size_t i = 0; i < producerThread.size(); i++)
-      {
-        configureProducer_[i] = true;
-      }
-
-      // already configured
-      currentConfiguration_ = nextConfiguration_;
-      nextConfiguration_.clear();
-      configure_ = false;
     }
 
     // clear surface
     SDL_FillRect(surface, NULL, 0x00000000);
 
     // draw lines
-    for(int i = 0; i < numInputs; i++)
+    for(int i = 0; i < config->viewer.size(); i++)
     {
       // Set the position where surface2 will be drawn on surface1
-      int w = 1920 >> 1;
-      int h = 1080 >> 1;
-      int x = 0; if (i == 1 || i == 3) x = w;
-      int y = 0; if (i == 2 || i == 3) y = h;
+      int w = config->viewer[i]->w;
+      int h = config->viewer[i]->h;
+      int x = config->viewer[i]->x;
+      int y = config->viewer[i]->y;
 
-      drawLine(videoBuffer, x, y, w, h, videoFrame->linesize[0], pixFmt, frameCount, videoTimeBase);
+      drawLine(videoBuffer, x, y, w, h, videoFrame->linesize[0], config->format, frameCount, config->timeBase);
     }
 
     // check inputs
-    for(int i = 0; i < numInputs; i++)
+    for(int i = 0; i < config->viewer.size(); i++)
     {
       // Set the position where surface2 will be drawn on surface1
-      int w = 1920 >> 1;
-      int h = 1080 >> 1;
-      int x = 0; if (i == 1 || i == 3) x = w;
-      int y = 0; if (i == 2 || i == 3) y = h;
+      int w = config->viewer[i]->w;
+      int h = config->viewer[i]->h;
+      int x = config->viewer[i]->x;
+      int y = config->viewer[i]->y;
 
       AVFrameExt *frameExtInput = pop(i);
       if(frameExtInput)
       {        
         // convert and scale
-        AVFrame *frame = frameConvert(frameExtInput->AVFrame, w, h, pixFmt);
+        AVFrame *frame = frameConvert(frameExtInput->AVFrame, w, h, config->format);
 
         // to surface
         SDL_Surface *inputSurface = SDL_CreateRGBSurfaceFrom(frame->data[0], frame->width, frame->height, 24, frame->linesize[0] , 0, 0, 0, 0);
@@ -507,7 +583,7 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
       }
 
       // title
-      std::string title = "INPUT #" + std::to_string(i + 1);
+      std::string title = config->viewer[i]->name.length() > 0? config->viewer[i]->name :  "???";
       SDL_Color textColor = { 0xff, 0xff, 0xff, 0xff };
       SDL_Surface *textSurface = TTF_RenderText_Solid(font, title.c_str(), textColor);      
       SDL_Rect textRect = { x + (w >> 1) - (textSurface->w >> 1), y, textSurface->w, textSurface->h };
@@ -523,10 +599,10 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     }
 
     videoFrame->pts = frameCount;
-    videoFrame->duration = av_rescale_q(1, videoTimeBase, videoTimeBase);
+    videoFrame->duration = av_rescale_q(1, config->timeBase, config->timeBase);
     frameCount++;
 
-    AVFrameExt frameExt = { videoTimeBase, videoFrame, fieldOrder };
+    AVFrameExt frameExt = { config->timeBase, videoFrame, config->fieldOrder };
 
     // render
     renderer.render(frameExt.AVFrame);
@@ -534,6 +610,11 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     // sync
     long long frd = frameDuration(&frameExt);
     clock.sync(frd);
+  }
+
+  if(config)
+  {
+    free_config(config);
   }
 
   renderer.cleanUp();
