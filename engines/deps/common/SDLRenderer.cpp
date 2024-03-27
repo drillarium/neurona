@@ -135,6 +135,8 @@ bool SDLRenderer::render(AVFrame *_frame, SDL_Color _textColor)
   renderText(renderer_, font_, title_.c_str(), 0, 0, _textColor);
   std::string stats = "fps: " + std::to_string(fps);
   renderText(renderer_, font_, stats.c_str(), 0, fontSize_, _textColor);
+  std::string size = "size: " + std::to_string(_frame->width) + "x" + std::to_string(_frame->height);
+  renderText(renderer_, font_, size.c_str(), 0, fontSize_ << 1, _textColor);
 
   // Render the frame
   SDL_RenderPresent(renderer_);

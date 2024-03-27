@@ -91,37 +91,209 @@ bool runEngine(void *_engine, const char *_JsonConfig)
   return engine->run(_JsonConfig);
 }
 
+enum EViewType {
+  VT__VIDEO,
+  VT_GRAPHIC
+};
+
+struct SMultiviewerView
+{
+  EViewType type = VT__VIDEO;
+  int x = 0;
+  int y = 0;
+  int w = 0;
+  int h = 0;
+  std::string UID;
+};
+
+struct SMultiviewerVideoView : public SMultiviewerView
+{
+  bool drawVumter = false;
+  bool drawMetadata = false;
+};
+
+struct SMultiviewerCongif
+{
+  int width = 1920;
+  int height = 1080;
+  AVRational timeBase = {1, 25};
+  AVPixelFormat format = AV_PIX_FMT_RGB24;
+  std::vector<SMultiviewerView *> viewer;
+};
+
+const char WINLAY[] = "window_layout";
+const char WIDTH[] = "width";
+const char HEIGHT[] = "height";
+const char FR[] = "frame_rate";
+const char FORMAT[] = "format";
+const char COMP[] = "components";
+const char TYPE[] = "type";
+const char POS[] = "position";
+const char SIZE[] = "size";
+const char SOURCE[] = "source";
+const char VUMETER[] = "vumeter";
+const char METADATA[] = "metadata";
+const char SHOW[] = "show";
+const char XPOS[] = "x";
+const char YPOS[] = "y";
+
+AVRational parseFR(const char *_fr)
+{
+  std::istringstream iss(_fr);
+  std::string numerator_str, denominator_str;
+
+  // Split the string by '/'
+  std::getline(iss, numerator_str, '/');
+  std::getline(iss, denominator_str);
+
+  // Convert strings to integers
+  int numerator = std::stoi(numerator_str);
+  int denominator = std::stoi(denominator_str);
+
+  return { numerator, denominator };
+}
+
+EViewType string2type(const char *_type)
+{
+  if(!_stricmp(_type, "VIDEO"))
+  {
+    return EViewType::VT__VIDEO;
+  }
+  else if(!_stricmp(_type, "GRAPHIC"))
+  {
+    return EViewType::VT_GRAPHIC;
+  }
+
+  return EViewType::VT__VIDEO;
+}
+
+AVPixelFormat strig2format(const char *_format)
+{
+  if(!_stricmp(_format, "RGB24"))
+  {
+    return AV_PIX_FMT_RGB24;
+  }
+
+  return AV_PIX_FMT_RGB24;
+}
+
+SMultiviewerCongif * parseMultiviewerConfig(const char *_JsonConfig)
+{
+  rapidjson::Document d;
+  d.Parse(_JsonConfig);
+  if(d.HasParseError())
+  {
+    notifyError("Error parsing configuration: %s", _JsonConfig);
+    return NULL;
+  }
+
+  if(!d.HasMember(WINLAY) || !d[WINLAY].IsObject())
+  {
+    notifyError("Invalid configuration: %s", _JsonConfig);
+    return NULL;
+  }
+  
+  SMultiviewerCongif *mvc = new SMultiviewerCongif;
+  auto wl = d[WINLAY].GetObject();
+  if(wl.HasMember(WIDTH) && wl[WIDTH].IsInt())
+  {
+    mvc->width = wl[WIDTH].GetInt();
+  }
+  if(wl.HasMember(HEIGHT) && wl[HEIGHT].IsInt())
+  {
+    mvc->height = wl[HEIGHT].GetInt();
+  }
+  if(wl.HasMember(FR) && wl[FR].IsString())
+  {
+    std::string fr_str = wl[FR].GetString();
+    AVRational fr = parseFR(fr_str.c_str());
+    mvc->timeBase.num = fr.den;
+    mvc->timeBase.den = fr.num;
+  }
+  if(wl.HasMember(FORMAT) && wl[FORMAT].IsString())
+  {
+    std::string format_str = wl[FORMAT].GetString();
+    mvc->format = strig2format(format_str.c_str());
+  }
+  if(wl.HasMember(COMP) && wl[COMP].IsArray())
+  {
+    auto comAr = wl[COMP].GetArray();
+    for(rapidjson::Value::ConstValueIterator it = comAr.Begin(); it != comAr.End(); it++)
+    {
+      if(it->HasMember(TYPE))
+      {
+        // type
+        std::string type_str = (*it)[TYPE].GetString();
+        EViewType type = string2type(type_str.c_str());
+        SMultiviewerView *mvv = nullptr;
+        switch(type)
+        {
+          case EViewType::VT__VIDEO: mvv = new SMultiviewerVideoView; break;
+          case EViewType::VT_GRAPHIC: mvv = new SMultiviewerView; break;
+          default: mvv = new SMultiviewerView; break;          
+        }
+        mvv->type = type;
+        mvc->viewer.push_back(mvv);
+
+        // position
+        if(it->HasMember(POS))
+        {
+          auto pos = (*it)[POS].GetObject();
+          mvv->x = pos["x"].GetInt();
+          mvv->y = pos["y"].GetInt();
+        }
+
+        // source
+        if(it->HasMember(SOURCE))
+        {
+          mvv->UID = (*it)[SOURCE].GetString();
+        }
+
+        // size
+        if(it->HasMember(SIZE))
+        {
+          auto pos = (*it)[SIZE].GetObject();
+          mvv->w = pos["width"].GetInt();
+          mvv->h = pos["height"].GetInt();
+        }
+      }
+    }
+  }
+
+  return mvc;
+}
+
 const char DEFAULT_CONFIG[] = "{\
 \"window_layout\": {\
   \"width\": 1920,\
-    \"height\" : 1080,\
-    \"frame_rate\" : \"25/1\",\
-    \"format\" : \"ARGB\",\
-    \"components\" : [\
+  \"height\" : 1080,\
+  \"frame_rate\" : \"25/1\",\
+  \"format\" : \"ARGB\",\
+  \"components\" : [\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 0, \"y\" : 0 },\
         \"size\" : { \"width\": 960, \"height\" : 540 },\
         \"source\" : \"video_source_1.mp4\",\
-        \"vumeter\":\"\
+        \"vumeter\":\
           {\
-            \"show\": \"true\",\
+            \"show\": \"true\"\
           },\
-        \"metadata\":\"\
+        \"metadata\":\
           {\
-          },\
+          }\
       },\
       {\
         \"type\": \"graphic\",\
         \"position\" : { \"x\": 960, \"y\" : 0 },\
         \"size\" : { \"width\": 960, \"height\" : 540 },\
-        \"source\" : \"graphic_image.png\",\
+        \"source\" : \"graphic_image.png\"\
       },\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 0, \"y\" : 540 },\
         \"size\" : { \"width\": 960, \"height\" : 540 },\
-        \"source\" : \"video_source_2.mp4\",\
+        \"source\" : \"video_source_2.mp4\"\
       },\
       {\
         \"type\": \"graphic\",\
