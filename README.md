@@ -1,6 +1,6 @@
 # NEURONA
 
-Producer consumer pattern using FFMPEG and shared memory mechanism in order to share audio and video frames between FFMPEG processes.
+Producer consumer pattern using FFMPEG and shared memory mechanism in order to share audio and video frames between FFMPEG processes with no latency.
 
 ## Table of Contents
 - [Installation](#installation)
