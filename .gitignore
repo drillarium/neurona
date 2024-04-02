@@ -45,3 +45,14 @@ engines/ffmpeg-output/ffmpeg-output.vc15.vcxproj.user
 engines/sdl-mixer/sdl-mixer.vc15.vcxproj.user
 engines/sdl-renderer/sdl-renderer.vc15.vcxproj.user
 *.ipch
+/engines/.vs
+engines/cef-input/cef-input.vc17.vcxproj.user
+/engines/cef-input/x64
+/engines/deps/cef_binary_122.1.10+gc902316+chromium-122.0.6261.112_windows64
+engines/ffmpeg-input/ffmpeg-input.vc17.vcxproj.user
+/engines/ffmpeg-input/x64
+engines/ffmpeg-output/ffmpeg-output.vc17.vcxproj.user
+/engines/ffmpeg-output/x64
+engines/sdl-mixer/sdl-mixer.vc17.vcxproj.user
+/engines/sdl-mixer/x64
+/engines/sdl-renderer/x64

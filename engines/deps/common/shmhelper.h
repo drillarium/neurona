@@ -12,6 +12,8 @@ struct Message
   unsigned long offset;	            // offset from RingBuffer start
 };
 
+#pragma warning(disable:4200)
+
 struct RingBuffer
 {
   unsigned int size = 0;
@@ -21,6 +23,8 @@ struct RingBuffer
   /* always last member */
   Message buffer[];
 };
+
+#pragma warning(default:4200)
 
 struct ShMHandle
 {
