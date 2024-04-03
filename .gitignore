@@ -56,3 +56,5 @@ engines/ffmpeg-output/ffmpeg-output.vc17.vcxproj.user
 engines/sdl-mixer/sdl-mixer.vc17.vcxproj.user
 /engines/sdl-mixer/x64
 /engines/sdl-renderer/x64
+engines/cef-input/MediaDeviceSalts
+engines/cef-input/MediaDeviceSalts-journal

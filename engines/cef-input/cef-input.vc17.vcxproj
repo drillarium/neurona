@@ -37,6 +37,7 @@
     <ClInclude Include="..\deps\common\FFMPEG_sm_producer.h" />
     <ClInclude Include="..\deps\common\FFMPEG_utils.h" />
     <ClInclude Include="..\deps\common\SDLRenderer.h" />
+    <ClInclude Include="..\deps\common\sdl_keyboard_utils.h" />
     <ClInclude Include="..\deps\common\shmhelper.h" />
     <ClInclude Include="..\deps\common\sm_producer.h" />
     <ClInclude Include="..\deps\common\sync_clock.h" />
@@ -144,7 +145,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\deps\rapidjson-master\include;..\deps\common;..\deps\ffmpeg-6.1.1\include;..\deps\SDL2-2.30.1\include;..\deps\SDL2_ttf-2.22.0\include;..\deps\cef_binary_122.1.10+gc902316+chromium-122.0.6261.112_windows64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -196,6 +197,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\deps\rapidjson-master\include;..\deps\common;..\deps\ffmpeg-6.1.1\include;..\deps\SDL2-2.30.1\include;..\deps\SDL2_ttf-2.22.0\include;..\deps\cef_binary_122.1.10+gc902316+chromium-122.0.6261.112_windows64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -14,10 +14,10 @@ public:
   bool abort();
   bool putCommand(const char *_JsonCommand);
   bool run(const char *_JsonConfig);
-  bool push(AVFrameExt *_frame);
-  AVFrameExt * pop(long long timeout = 20000000LL);
 
 protected:
+  bool push(AVFrameExt* _frame);
+  AVFrameExt* pop(long long timeout = 20000000LL);
   void workerThreadFunc();
 
 protected:

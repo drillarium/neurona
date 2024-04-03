@@ -42,13 +42,13 @@ struct SMElement
 // FFMPEGSMElement: Object shared between sm producer / consumer
 struct FFMPEGSMElement : public SMElement
 {
-  AVRational timebase;
-  AVFieldOrder fieldOrder;
-  int format;
-  int width;
-  int height;
-  long long duration;
-  int linesize[AV_NUM_DATA_POINTERS];
+  AVRational timebase = {0, 1};
+  AVFieldOrder fieldOrder = AV_FIELD_UNKNOWN;
+  int format = -1;
+  int width = 0;
+  int height = 0;
+  long long duration = 0;
+  int linesize[AV_NUM_DATA_POINTERS] = { 0 };
   FFMPEGSMElement()
   {
     size = sizeof(FFMPEGSMElement);

@@ -328,28 +328,28 @@ const char DEFAULT_CONFIG[] = "{\
         \"type\": \"video\",\
         \"position\" : { \"x\": 0, \"y\" : 0 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"video_source_1.mp4\",\
+        \"source\" : \"TEST_INPUT\",\
         \"name\" : \"Input#1\"\
       },\
       {\
         \"type\": \"graphic\",\
         \"position\" : { \"x\": 480, \"y\" : 0 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"graphic_image.png\",\
+        \"source\" : \"TEST_INPUT\",\
         \"name\" : \"Input#2\"\
       },\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 960, \"y\" : 0 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"video_source_2.mp4\",\
+        \"source\" : \"TEST_INPUT\",\
         \"name\" : \"Input#3\"\
       },\
       {\
         \"type\": \"graphic\",\
         \"position\" : { \"x\": 1440, \"y\" : 0 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"graphic_image_2.png\",\
+        \"source\" : \"TEST_INPUT\",\
         \"format\" : \"png\",\
         \"name\" : \"Input#4\"\
       },\
@@ -357,28 +357,28 @@ const char DEFAULT_CONFIG[] = "{\
         \"type\": \"video\",\
         \"position\" : { \"x\": 0, \"y\" : 540 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"video_source_1.mp4\",\
+        \"source\" : \"TEST_INPUT\",\
         \"name\" : \"Input#5\"\
       },\
       {\
         \"type\": \"graphic\",\
         \"position\" : { \"x\": 480, \"y\" : 540 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"graphic_image.png\",\
+        \"source\" : \"TEST_INPUT\",\
         \"name\" : \"Input#6\"\
       },\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 960, \"y\" : 540 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"video_source_2.mp4\",\
+        \"source\" : \"TEST_INPUT\",\
         \"name\" : \"Input#7\"\
       },\
       {\
         \"type\": \"graphic\",\
         \"position\" : { \"x\": 1440, \"y\" : 540 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"graphic_image_2.png\",\
+        \"source\" : \"TEST_INPUT\",\
         \"format\" : \"png\",\
         \"name\" : \"Input#8\"\
       }\

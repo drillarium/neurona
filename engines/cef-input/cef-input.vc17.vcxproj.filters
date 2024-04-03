@@ -70,5 +70,8 @@
     <ClInclude Include="..\deps\common\FFMPEG_utils.h">
       <Filter>Header files</Filter>
     </ClInclude>
+    <ClInclude Include="..\deps\common\sdl_keyboard_utils.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
