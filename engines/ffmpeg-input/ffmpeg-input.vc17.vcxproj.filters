@@ -23,9 +23,6 @@
     <ClCompile Include="..\deps\common\sm_producer.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="..\deps\common\shmhelper.linux.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="..\deps\common\shmhelper.win.cpp">
       <Filter>Source files</Filter>
     </ClCompile>

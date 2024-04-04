@@ -22,7 +22,6 @@
     <ClCompile Include="..\deps\common\FFMPEG_sm_producer.cpp" />
     <ClCompile Include="..\deps\common\main.cpp" />
     <ClCompile Include="..\deps\common\SDLRenderer.cpp" />
-    <ClCompile Include="..\deps\common\shmhelper.linux.cpp" />
     <ClCompile Include="..\deps\common\shmhelper.win.cpp" />
     <ClCompile Include="..\deps\common\sm_producer.cpp" />
     <ClCompile Include="src\engine.cpp" />

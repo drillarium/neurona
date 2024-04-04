@@ -58,3 +58,6 @@ engines/sdl-mixer/sdl-mixer.vc17.vcxproj.user
 /engines/sdl-renderer/x64
 engines/cef-input/MediaDeviceSalts
 engines/cef-input/MediaDeviceSalts-journal
+/engines/deps/ultralight-sdk-1.3.0-win-x64
+engines/cef-input/src/engine - copia (2).cpp
+engines/cef-input/src/engine - copia.cpp

@@ -23,13 +23,19 @@
     <ClCompile Include="..\deps\common\sm_producer.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="..\deps\common\shmhelper.linux.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="..\deps\common\shmhelper.win.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
     <ClCompile Include="..\deps\common\FFMPEG_sm_producer.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\simple_app.cc">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\simple_handler.cc">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\simple_handler.win.cc">
       <Filter>Source files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -70,7 +76,10 @@
     <ClInclude Include="..\deps\common\FFMPEG_utils.h">
       <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\common\sdl_keyboard_utils.h">
+    <ClInclude Include="src\simple_app.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\simple_handler.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

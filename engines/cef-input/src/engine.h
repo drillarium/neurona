@@ -17,7 +17,7 @@ public:
   bool push(AVFrameExt *_frame);
 
 protected:
-  AVFrameExt * pop();
+  AVFrameExt * begin();
   void workerThreadFunc();
 
 protected:
@@ -25,5 +25,5 @@ protected:
   bool abort_ = false;                   // abort flag
   std::list<AVFrameExt*> frameBuffer_;   // frame buffer
   std::mutex frameBufferMutex_;          // mutex
-  int maxBufferSize_ = 2;                // max buffer size
+  int maxBufferSize_ = 1;                // max buffer size
 };
