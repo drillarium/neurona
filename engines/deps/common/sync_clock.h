@@ -8,31 +8,51 @@ class SyncClock
 public:
   SyncClock() {};
 
+  void testSleepDuration()
+  {
+    constexpr int initialSleepDurationMs = 1;
+    int sleepDurationMs = initialSleepDurationMs;
+
+    // Loop until the observed sleep duration stops decreasing
+    while (true) {
+      auto start = std::chrono::high_resolution_clock::now();
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepDurationMs));
+      auto end = std::chrono::high_resolution_clock::now();
+
+      // Calculate the observed sleep duration
+      auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+      std::cout << "Slept for approximately " << elapsed << " microseconds for " << sleepDurationMs << " milliseconds sleep duration." << std::endl;
+
+      // If sleep duration is already 1 microsecond, break the loop
+      if (sleepDurationMs == 1)
+        break;
+
+      // Decrease sleep duration for next iteration
+      --sleepDurationMs;
+    }
+  }
+
   void sync(long long _frameDurationIn100ns)
   {
-    long long frameDuration = _frameDurationIn100ns * 100;
-    long long remainingTime = frameDuration;
     if(startTime_ != -1)
     {
+      // elapsed
+      long long endTime = startTime_ + (_frameDurationIn100ns * 100);  
       long long now = Clock::instance().elapsed();
-      long long elapsedTime = now - startTime_;
-      remainingTime = elapsedTime < frameDuration ? frameDuration - elapsedTime : 0;
-    }
-
-    if(remainingTime > 0)
-    {
-      long long start = Clock::instance().elapsed();
-      long long elapsed = 0;
-      do
+      long long sleepPrec = 5000000LL;
+      while(endTime > now)
       {
-        std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-        long long now = Clock::instance().elapsed();
-        elapsed = now - start;
-      } while (elapsed <= remainingTime);
+        if((endTime - now) > sleepPrec)
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        now = Clock::instance().elapsed();
+      }          
     }
+      
+    ticks();
 
     startTime_ = Clock::instance().elapsed();
-    ticks();
   }
 
   void ticks()
@@ -51,10 +71,15 @@ public:
     if(elapsed > 0)
     {
       ticksPerSecond_ = ((double) (ticks_ * 1000000000LL) / elapsed);
+      // 2 decimals precission
+      ticksPerSecond_ = std::round(ticksPerSecond_ * 100.0) / 100.0;
     }
 
     ticks_++;
-    if(elapsed > 2000000000LL)
+
+    // reset every 5 seconds 
+    long long resetTime = 5000000000LL;
+    if(elapsed > resetTime)
     {
       ticks_ = 0;
     }
