@@ -14,7 +14,7 @@ public:
 
   bool init(const char *_title, int _width = 320, int _height = 180, int _fontSize = 10);
   bool cleanUp();
-  bool render(AVFrame *_frame, SDL_Color _textColor = { 0, 255, 255 });
+  bool render(AVFrame *_frame, SDL_Color _textColor = { 0, 0, 255 });
 
 protected:
   void renderText(SDL_Renderer *_renderer, TTF_Font *_font, const char *_text, int _x, int _y, SDL_Color _textColor);

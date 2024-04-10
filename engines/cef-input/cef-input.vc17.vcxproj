@@ -52,6 +52,14 @@
     <ClInclude Include="src\simple_app.h" />
     <ClInclude Include="src\simple_handler.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="index.html">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="example.png" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{F7C4D86B-455B-438E-826C-C03FF4E4D387}</ProjectGuid>

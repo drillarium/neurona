@@ -141,7 +141,7 @@ extern "C" {
 // run. Main thread generates black and silence while stream does not generate AVsamples
 bool CefInputEngine::run(const char *_JsonConfig)
 {
-  UID_ = "TEST_INPUT";
+  UID_ = "CEF_INPUT";
 
 void *sandbox_info = nullptr;
 
@@ -189,7 +189,7 @@ void *sandbox_info = nullptr;
   videoFrame = av_frame_alloc();
   videoFrame->width = 800;
   videoFrame->height = 600;
-  videoFrame->format = AV_PIX_FMT_RGBA;
+  videoFrame->format = AV_PIX_FMT_BGRA;
 
   int videoBufferSize = av_image_get_buffer_size((AVPixelFormat) videoFrame->format, videoFrame->width, videoFrame->height, 1);
   uint8_t *videoBuffer = (uint8_t*) av_malloc(videoBufferSize);
@@ -200,7 +200,7 @@ void *sandbox_info = nullptr;
   // CEF has initialized.
   CefRefPtr<SimpleApp> app(new SimpleApp([&] (const void* buffer, int w, int h) {
         int bufferSize = w * h * 4;
-        memcpy(videoFrame->data[0], buffer, bufferSize);
+        memcpy(videoBuffer, buffer, bufferSize);
 
         // push
         AVFrameExt* frameExt = new AVFrameExt;

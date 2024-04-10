@@ -30,5 +30,4 @@ protected:
   std::vector<std::list<AVFrameExt *>> frameBuffer_;  // frame buffer per producer
   std::vector<std::mutex> frameBufferMutex_;          // mutex per producer
   int maxBufferSize_ = 2;                             // max buffer size
-  int timeoutOpen_ = 5;                               // in seconds
 };

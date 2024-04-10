@@ -95,3 +95,15 @@ __inline AVFrame * frameDeepClone(AVFrame *_frame)
 
   return copyFrame;
 }
+
+__inline int getBitsPerPixel(AVPixelFormat _format)
+{
+  const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(_format);
+  if (!desc)
+  {
+    std::cerr << "Error: Pixel format not found" << std::endl;
+    return -1;
+  }
+
+  return av_get_bits_per_pixel(desc);
+}

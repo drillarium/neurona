@@ -91,6 +91,21 @@ bool runEngine(void *_engine, const char *_JsonConfig)
   return engine->run(_JsonConfig);
 }
 
+SDL_PixelFormatEnum FFMPEGPixelFormat2SDLPixelFormat(AVPixelFormat _pixFmt)
+{
+  switch(_pixFmt)
+  {
+    case AV_PIX_FMT_RGB24:
+      return SDL_PIXELFORMAT_RGB24;
+    case AV_PIX_FMT_RGBA:
+      return SDL_PIXELFORMAT_RGBA32;
+    case AV_PIX_FMT_BGRA:
+      return SDL_PIXELFORMAT_ABGR8888;
+    default:
+      return SDL_PIXELFORMAT_UNKNOWN;
+  }
+}
+
 enum EViewType {
   VT__VIDEO,
   VT_GRAPHIC
@@ -177,7 +192,15 @@ AVPixelFormat strig2format(const char *_format)
   {
     return AV_PIX_FMT_RGB24;
   }
-
+  if(!_stricmp(_format, "ARGB"))
+  {
+    return AV_PIX_FMT_ARGB;
+  }
+  if(!_stricmp(_format, "ABGR"))
+  {
+    return AV_PIX_FMT_ABGR;
+  }
+  
   return AV_PIX_FMT_RGB24;
 }
 
@@ -322,34 +345,62 @@ const char DEFAULT_CONFIG[] = "{\
   \"height\" : 1080,\
   \"frame_rate\" : \"25/1\",\
   \"field_order\" : \"PROGRESSIVE\",\
+  \"format\" : \"RGB24\",\
+  \"components\" : [\
+      {\
+        \"type\": \"video\",\
+        \"position\" : { \"x\": 0, \"y\" : 0 },\
+        \"size\" : { \"width\": 960, \"height\" : 1080 },\
+        \"source\" : \"FFMPEG_INPUT\",\
+        \"name\" : \"BACKGROUND\"\
+      },\
+      {\
+        \"type\": \"graphic\",\
+        \"position\" : { \"x\": 960, \"y\" : 0 },\
+        \"size\" : { \"width\": 960, \"height\" : 1080 },\
+        \"source\" : \"FFMPEG_INPUT\",\
+        \"format\" : \"png\",\
+        \"name\" : \"OVERLAY\"\
+      }\
+    ]\
+  }\
+}\
+";
+
+const char DEFAULT_CONFIG_[] = "{\
+\"window_layout\": {\
+  \"width\": 1920,\
+  \"height\" : 1080,\
+  \"frame_rate\" : \"25/1\",\
+  \"field_order\" : \"PROGRESSIVE\",\
   \"format\" : \"ARGB\",\
   \"components\" : [\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 0, \"y\" : 0 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"TEST_INPUT\",\
+        \"source\" : \"FFMPEG_INPUT\",\
         \"name\" : \"Input#1\"\
       },\
       {\
         \"type\": \"graphic\",\
         \"position\" : { \"x\": 480, \"y\" : 0 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"TEST_INPUT\",\
+        \"source\" : \"FFMPEG_INPUT\",\
         \"name\" : \"Input#2\"\
       },\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 960, \"y\" : 0 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"TEST_INPUT\",\
+        \"source\" : \"FFMPEG_INPUT\",\
         \"name\" : \"Input#3\"\
       },\
       {\
         \"type\": \"graphic\",\
-        \"position\" : { \"x\": 1440, \"y\" : 0 },\
+        \"position\" : { \"x\": 1200, \"y\" : 0 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"TEST_INPUT\",\
+        \"source\" : \"FFMPEG_INPUT\",\
         \"format\" : \"png\",\
         \"name\" : \"Input#4\"\
       },\
@@ -357,28 +408,28 @@ const char DEFAULT_CONFIG[] = "{\
         \"type\": \"video\",\
         \"position\" : { \"x\": 0, \"y\" : 540 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"TEST_INPUT\",\
+        \"source\" : \"CEF_INPUT\",\
         \"name\" : \"Input#5\"\
       },\
       {\
         \"type\": \"graphic\",\
         \"position\" : { \"x\": 480, \"y\" : 540 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"TEST_INPUT\",\
+        \"source\" : \"CEF_INPUT\",\
         \"name\" : \"Input#6\"\
       },\
       {\
         \"type\": \"video\",\
         \"position\" : { \"x\": 960, \"y\" : 540 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"TEST_INPUT\",\
+        \"source\" : \"CEF_INPUT\",\
         \"name\" : \"Input#7\"\
       },\
       {\
         \"type\": \"graphic\",\
         \"position\" : { \"x\": 1440, \"y\" : 540 },\
         \"size\" : { \"width\": 480, \"height\" : 540 },\
-        \"source\" : \"TEST_INPUT\",\
+        \"source\" : \"CEF_INPUT\",\
         \"format\" : \"png\",\
         \"name\" : \"Input#8\"\
       }\
@@ -460,7 +511,7 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
 
   // renderer
   SDLRenderer renderer;
-  renderer.init(UID_.c_str());
+  renderer.init(UID_.c_str(), 720, 576);
 
   // sm protocol
   FFMPEGSharedMemoryProducer sm;
@@ -503,23 +554,21 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
         {
           SDL_FreeSurface(surface);
         }
-        surface = SDL_CreateRGBSurfaceFrom(videoFrame->data[0], videoFrame->width, videoFrame->height, 24, videoFrame->linesize[0], 0, 0, 0, 0);
+
+        int bpp = getBitsPerPixel((AVPixelFormat) nextConfig->format);
+        SDL_PixelFormatEnum sdlPixForm = FFMPEGPixelFormat2SDLPixelFormat((AVPixelFormat)nextConfig->format);      
+        surface = SDL_CreateRGBSurfaceWithFormatFrom(videoFrame->data[0], videoFrame->width, videoFrame->height, bpp, videoFrame->linesize[0], sdlPixForm);
 
         // threads
         std::vector<std::mutex> list(std::max(producerThread.size(), nextConfig->viewer.size()));
         frameBufferMutex_.swap(list);
         for(size_t i = producerThread.size(); i < nextConfig->viewer.size(); i++)
         {
-          configureProducer_.push_back(true);
+          configureProducer_.push_back(false);
           frameBuffer_.push_back(std::list<AVFrameExt *>());        
           producerThread.push_back(std::thread([&, i] {
             workerThreadFunc((int) i);
           }));       
-        }
-        // 
-        for(size_t i = 0; i < producerThread.size(); i++)
-        {
-          configureProducer_[i] = true;
         }
 
         // already configured
@@ -531,6 +580,12 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
         currentConfiguration_ = nextConfiguration_;
         nextConfiguration_.clear();
         configure_ = false;
+
+        // 
+        for(size_t i = 0; i < producerThread.size(); i++)
+        {
+          configureProducer_[i] = true;
+        }
       }
     }
 
@@ -559,13 +614,21 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
       int y = config->viewer[i]->y;
 
       AVFrameExt *frameExtInput = pop(i);
+      bool validInput = !!frameExtInput;
       if(frameExtInput)
-      {        
+      {         
         // convert and scale
-        AVFrame *frame = frameConvert(frameExtInput->AVFrame, w, h, config->format);
+        AVFrame *frame = frameConvert(frameExtInput->AVFrame, w, h, (AVPixelFormat) frameExtInput->AVFrame->format);
+
+        // 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff // transparent verde
+        // 0x0000ff00, 0x00ff0000, 0xff000000, 0x000000ff // transparent amarillo
+        // 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 // no transparente rojo OK
+        // https://github.com/bminor/SDL/blob/master/src/video/SDL_pixels.c#L294
 
         // to surface
-        SDL_Surface *inputSurface = SDL_CreateRGBSurfaceFrom(frame->data[0], frame->width, frame->height, 24, frame->linesize[0] , 0, 0, 0, 0);
+        int bpp = getBitsPerPixel((AVPixelFormat) frameExtInput->AVFrame->format);
+        SDL_PixelFormatEnum sdlPixForm = FFMPEGPixelFormat2SDLPixelFormat((AVPixelFormat)frameExtInput->AVFrame->format);
+        SDL_Surface *inputSurface = SDL_CreateRGBSurfaceWithFormatFrom(frame->data[0], frame->width, frame->height, bpp, frame->linesize[0], sdlPixForm);
 
         // Blit surface2 onto surface1 at the specified position
         SDL_Rect srcRect = { 0, 0, inputSurface->w, inputSurface->h };
@@ -584,6 +647,7 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
 
       // title
       std::string title = config->viewer[i]->name.length() > 0? config->viewer[i]->name :  "???";
+      title += validInput ? "" : " *";
       SDL_Color textColor = { 0xff, 0xff, 0xff, 0xff };
       SDL_Surface *textSurface = TTF_RenderText_Solid(font, title.c_str(), textColor);      
       SDL_Rect textRect = { x + (w >> 1) - (textSurface->w >> 1), y, textSurface->w, textSurface->h };
@@ -643,7 +707,7 @@ void SDLMixerEngine::workerThreadFunc(int _index)
       smc.deinit();
 
       // open 
-      smc.init("TEST_INPUT");
+      smc.init(_index % 2? "CEF_INPUT" : "FFMPEG_INPUT");
 
       // configured
       configureProducer_[_index] = false;

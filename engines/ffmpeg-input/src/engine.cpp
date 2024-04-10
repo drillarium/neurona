@@ -169,7 +169,7 @@ bool FFMPEGInputEngine::run(const char *_JsonConfig)
   // uint8_t *audioBuffer = (uint8_t *) av_malloc(audioBufferSize);
   // av_samples_fill_arrays(audioFrame->data, audioFrame->linesize, audioBuffer, channels, audioSamplesPerFrame, sampleFmt, 0);
 
-  UID_ = "TEST_INPUT";
+  UID_ = "FFMPEG_INPUT";
   std::string url = "udp://127.0.0.1:8090";
 
   int64_t frameCount = 0;

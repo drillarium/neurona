@@ -112,7 +112,7 @@ void SimpleApp::OnContextInitialized() {
   // that instead of the default URL.
   url = command_line->GetSwitchValue("url");
   if (url.empty()) {
-    url = "https://vector3.tv/";
+    url = "file:///C:/Projects/avio/neurona/engines/cef-input/index.html"; // "file:///C:/Projects/avio/neurona/engines/cef-input/example.png"; // "file:///C:/Projects/avio/neurona/engines/cef-input/index.html"; // "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Circle_%28transparent%29.png/768px-Circle_%28transparent%29.png"; // "https://vector3.tv/";
   }
 
   // Create the browser using the Views framework if "--use-views" is specified
