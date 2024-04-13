@@ -64,9 +64,11 @@ bool SDLRenderer::init(const char *_title, int _width, int _height, int _fontSiz
   font_ = TTF_OpenFont("../deps/common/Montserrat-Regular.ttf", _fontSize);
   if(!font_)
   {
+    font_ = TTF_OpenFont("./Montserrat-Regular.ttf", _fontSize);
+  }
+  if(!font_)
+  {
     notifyError("Font loading failed: %s", TTF_GetError());
-    cleanUp();
-    return false;
   }
 
   return true;
@@ -132,11 +134,14 @@ bool SDLRenderer::render(AVFrame *_frame, SDL_Color _textColor)
   SDL_RenderCopy(renderer_, texture_, nullptr, nullptr);
 
   // text
-  renderText(renderer_, font_, title_.c_str(), 0, 0, _textColor);
-  std::string stats = "fps: " + std::to_string(fps);
-  renderText(renderer_, font_, stats.c_str(), 0, fontSize_, _textColor);
-  std::string size = "size: " + std::to_string(_frame->width) + "x" + std::to_string(_frame->height);
-  renderText(renderer_, font_, size.c_str(), 0, fontSize_ << 1, _textColor);
+  if(font_)
+  {
+    renderText(renderer_, font_, title_.c_str(), 0, 0, _textColor);
+    std::string stats = "fps: " + std::to_string(fps);
+    renderText(renderer_, font_, stats.c_str(), 0, fontSize_, _textColor);
+    std::string size = "size: " + std::to_string(_frame->width) + "x" + std::to_string(_frame->height);
+    renderText(renderer_, font_, size.c_str(), 0, fontSize_ << 1, _textColor);
+  }
 
   // Render the frame
   SDL_RenderPresent(renderer_);

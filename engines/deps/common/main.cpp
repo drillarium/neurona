@@ -22,6 +22,21 @@ std::string configFile;   // the config file
 std::string configJson;   // the config Json
 bool version = false;     // print version and exit
 bool schema = false;      // print schema and exit
+bool debug = false;
+
+#include <Windows.h> // exe path
+#include <direct.h>  // _chdir
+void changeWorkingFolder()
+{
+  HMODULE hModule = GetModuleHandle(NULL);
+  if (!hModule) return;
+
+  char ownPth[MAX_PATH] = { '\0' };
+  GetModuleFileNameA(hModule, ownPth, (sizeof(ownPth)));
+  std::string s(ownPth);
+  s = s.substr(0, s.find_last_of("\\/"));
+  _chdir(s.c_str());
+}
 
 // readParams
 void readParams(int argc, char *argv[])
@@ -44,6 +59,10 @@ void readParams(int argc, char *argv[])
     {
       schema = true;
     }
+    else if (!_stricmp(argv[i], "-d"))
+    {
+      debug = true;
+    }
   }
 }
 
@@ -55,6 +74,12 @@ int main(int argc, char * argv[])
 {
   // read params
   readParams(argc, argv);
+
+  // invoked from Launcher
+  if(!debug)
+  {
+    changeWorkingFolder();
+  }
 
   if(version)
   {
@@ -86,7 +111,9 @@ int main(int argc, char * argv[])
           }
           else
           {
-            putCommand(engine, userInput.c_str());
+            std::string cmd = base64_decode(userInput);
+            notifyInfo("Command %s received", cmd.c_str());
+            putCommand(engine, cmd.c_str());
           }
 
           std::this_thread::sleep_for(1ms);

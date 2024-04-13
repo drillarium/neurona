@@ -25,7 +25,7 @@ __inline void notifyLog(const char *_severity, const char *_message)
 
   writer.EndObject(); // }
 
-  std::cout << buffer.GetString() << std::flush;
+  std::cout << "+++++" << buffer.GetString() << "-----" << std::flush;
 }
 
 __inline void notifyError(const char *_format, ...)
