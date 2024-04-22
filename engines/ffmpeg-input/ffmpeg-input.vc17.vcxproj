@@ -146,6 +146,11 @@
       <AdditionalLibraryDirectories>..\deps\ffmpeg-6.1.1\lib;..\deps\SDL2-2.30.1\lib\x64;..\deps\SDL2_ttf-2.22.0\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;SDL2.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Message>Copying...</Message>
+      <Command>copy $(OutDirFullPath)\*.exe $(SolutionDir)\..\Launcher\apps\ffmpeg-input\
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -190,6 +195,13 @@
       <AdditionalLibraryDirectories>..\deps\ffmpeg-6.1.1\lib;..\deps\SDL2-2.30.1\lib\x64;..\deps\SDL2_ttf-2.22.0\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;SDL2.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(OutDirFullPath)\*.exe $(SolutionDir)\..\Launcher\apps\ffmpeg-input\
+</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying...</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

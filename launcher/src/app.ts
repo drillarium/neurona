@@ -7,7 +7,7 @@ import * as cors from "cors";                     // cors (cross origin)
 import { createWebsocketServer } from './wsserver';
 import { appsRouter } from './app/app.router';
 import { AppController } from './app/app.controller';
-import { deinitBonjour, initBonjour } from './bonjourpeer';
+import { deinitBonjour, initBonjour } from './bonjourpublisher';
 
 // current version
 const config: AppConfig = readConfig();
@@ -51,22 +51,6 @@ const server = app.listen(PORT, INTERFACE, () => {
   // init
   appController.init(config);
 });
-
-/*
-// exit app. Ensure bonjour goodbye
-async function exitApp(signal: string) {        
-  logger.info(`Application ending -- ${signal} --`);
-  appController.deinit();
-  await deinitBonjour();
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  logger.info(`Application ends`);
-  process.exit();
-}
-
-process.on('SIGTERM', () => { exitApp("SIGTERM"); });
-process.on('SIGINT', () => { exitApp("SIGINT"); });
-process.stdin.resume(); //so the program will not close instantly
-*/
 
 function tearDown(signal: string, errorCode: number = 0) {
   logger.info(`Application ending -- ${signal} --`);

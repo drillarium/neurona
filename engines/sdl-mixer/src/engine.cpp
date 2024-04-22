@@ -156,22 +156,6 @@ const char XPOS[] = "x";
 const char YPOS[] = "y";
 const char NAME[] = "name";
 
-AVRational parseFR(const char *_fr)
-{
-  std::istringstream iss(_fr);
-  std::string numerator_str, denominator_str;
-
-  // Split the string by '/'
-  std::getline(iss, numerator_str, '/');
-  std::getline(iss, denominator_str);
-
-  // Convert strings to integers
-  int numerator = std::stoi(numerator_str);
-  int denominator = std::stoi(denominator_str);
-
-  return { numerator, denominator };
-}
-
 EViewType string2type(const char *_type)
 {
   if(!_stricmp(_type, "VIDEO"))
@@ -185,51 +169,6 @@ EViewType string2type(const char *_type)
 
   return EViewType::VT__VIDEO;
 }
-
-AVPixelFormat strig2format(const char *_format)
-{
-  if(!_stricmp(_format, "RGB24"))
-  {
-    return AV_PIX_FMT_RGB24;
-  }
-  if(!_stricmp(_format, "ARGB"))
-  {
-    return AV_PIX_FMT_ARGB;
-  }
-  if(!_stricmp(_format, "ABGR"))
-  {
-    return AV_PIX_FMT_ABGR;
-  }
-  
-  return AV_PIX_FMT_RGB24;
-}
-
-AVFieldOrder strig2fieldorder(const char *_field)
-{
-  if(!_stricmp(_field, "PROGRESSIVE"))
-  {
-    return AV_FIELD_PROGRESSIVE;
-  }
-  if(!_stricmp(_field, "FIELD_TT"))
-  {
-    return AV_FIELD_TT;
-  }
-  if(!_stricmp(_field, "FIELD_BB"))
-  {
-    return AV_FIELD_BB;
-  }
-  if(!_stricmp(_field, "FIELD_TB"))
-  {
-    return AV_FIELD_TB;
-  }
-  if(!_stricmp(_field, "FIELD_BT"))
-  {
-    return AV_FIELD_BT;
-  }
-
-  return AV_FIELD_PROGRESSIVE;
-}
-
 
 SMultiviewerCongif * parseMultiviewerConfig(const char *_JsonConfig)
 {
@@ -666,7 +605,7 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     videoFrame->duration = av_rescale_q(1, config->timeBase, config->timeBase);
     frameCount++;
 
-    AVFrameExt frameExt = { config->timeBase, videoFrame, config->fieldOrder };
+    AVFrameExt frameExt = { config->timeBase, config->fieldOrder, AVMEDIA_TYPE_VIDEO, 0, videoFrame };
 
     // render
     renderer.render(frameExt.AVFrame);

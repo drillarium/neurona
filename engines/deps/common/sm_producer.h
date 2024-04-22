@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <thread>
 #include "shmhelper.h"
 
 #define DEFAULT_SMELEM_SIZE (8 * 1024 * 1024)
@@ -18,7 +19,12 @@ public:
   bool write(const unsigned char *_data, int _dataSize);
 
 protected:
+  void keepAliveThreadFunc();
+
+protected:
   std::string ID_;
   ShMHandle smHandle_ = {};
   unsigned long long smMessageID_ = 0;
+  bool running_ = false;
+  std::thread workerThread_;
 };

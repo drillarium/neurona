@@ -1,0 +1,8 @@
+{
+  "uid": "config.sample",
+  "name": "engine name",
+  "autostart": true,
+  "url": "udp://127.0.0.1:8090",
+  "extra": "timeout='5'",
+  "preview": true
+}

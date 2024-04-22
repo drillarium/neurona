@@ -13,7 +13,7 @@ SDLRenderer::~SDLRenderer()
 
 }
 
-bool SDLRenderer::init(const char *_title, int _width, int _height, int _fontSize)
+bool SDLRenderer::init(const char *_title, int _width, int _height, int _fontSize, bool _visible)
 {
   title_ = _title;
   width_ = _width;
@@ -29,7 +29,7 @@ bool SDLRenderer::init(const char *_title, int _width, int _height, int _fontSiz
   }
 
   // Create SDL window
-  window_ = SDL_CreateWindow("Video Player", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width_, height_, SDL_WINDOW_SHOWN);
+  window_ = SDL_CreateWindow("Video Player", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width_, height_, _visible? SDL_WINDOW_SHOWN : SDL_WINDOW_HIDDEN);
   if(!window_)
   {
     notifyError("Failed to create SDL window: %s", SDL_GetError());
@@ -140,7 +140,13 @@ bool SDLRenderer::render(AVFrame *_frame, SDL_Color _textColor)
     std::string stats = "fps: " + std::to_string(fps);
     renderText(renderer_, font_, stats.c_str(), 0, fontSize_, _textColor);
     std::string size = "size: " + std::to_string(_frame->width) + "x" + std::to_string(_frame->height);
-    renderText(renderer_, font_, size.c_str(), 0, fontSize_ << 1, _textColor);
+    renderText(renderer_, font_, size.c_str(), 0, fontSize_ * 2, _textColor);
+    std::string format = "format: " + std::string(av_get_pix_fmt_name((AVPixelFormat) _frame->format));
+    renderText(renderer_, font_, format.c_str(), 0, fontSize_ * 3, _textColor);
+    std::string duration = "duration: " + std::to_string(_frame->duration);
+    renderText(renderer_, font_, duration.c_str(), 0, fontSize_ * 4, _textColor);
+    std::string pts = "pts: " + std::to_string(_frame->pts);
+    renderText(renderer_, font_, pts.c_str(), 0, fontSize_ * 5, _textColor);
   }
 
   // Render the frame

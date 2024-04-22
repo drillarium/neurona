@@ -279,7 +279,7 @@ bool SDLRendererEngine::run(const char *_JsonConfig)
     videoFrame->duration = av_rescale_q(1, videoTimeBase, videoTimeBase);
     frameCount++;
 
-    AVFrameExt frameExt = { videoTimeBase, videoFrame, fieldOrder };
+    AVFrameExt frameExt = { videoTimeBase, fieldOrder, AVMEDIA_TYPE_VIDEO, 0, videoFrame };
 
     // shared memory
     sm.write(&frameExt);

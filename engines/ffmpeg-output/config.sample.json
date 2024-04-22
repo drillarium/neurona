@@ -1,0 +1,7 @@
+{
+  "uid": "config.sample",
+  "src_uid": "config.sample",
+  "name": "engine name",
+  "autostart": true,
+  "preview": true
+}

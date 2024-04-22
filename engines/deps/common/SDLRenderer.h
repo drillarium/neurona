@@ -12,7 +12,7 @@ public:
   SDLRenderer();
   ~SDLRenderer();
 
-  bool init(const char *_title, int _width = 320, int _height = 180, int _fontSize = 10);
+  bool init(const char *_title, int _width = 320, int _height = 180, int _fontSize = 10, bool _visible = true);
   bool cleanUp();
   bool render(AVFrame *_frame, SDL_Color _textColor = { 0, 0, 255 });
 

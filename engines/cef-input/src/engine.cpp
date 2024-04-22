@@ -301,7 +301,7 @@ void CefInputEngine::workerThreadFunc()
 
     frameCount++;
 
-    AVFrameExt frameExt = { videoTimeBase, videoFrame, fieldOrder };
+    AVFrameExt frameExt = { videoTimeBase, fieldOrder, AVMEDIA_TYPE_VIDEO, 0, videoFrame };
 
     /* buffer consumer */
     long long frd = frameDuration(&frameExt);

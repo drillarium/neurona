@@ -23,4 +23,19 @@ browser.on('up', (service) => {
     console.log('Service up:', service.name);
 });
 
-setInterval(() => { console.log("update"); browser.update()}, 1000);
+browser.removeListener("up", (service) => {
+    console.log('removeListener up:', service.name);
+});
+
+browser.removeListener("down", (service) => {
+    console.log('removeListener down:', service.name);
+});
+
+browser.once("up", (service) => {console.log('once up:', service.name);});
+browser.once("down", (service) => {console.log('once down:', service.name);});
+
+setInterval(() => { 
+    console.log("update");
+    browser.update();
+    browser.services.slice(0, browser.services.length);
+    }, 1000);

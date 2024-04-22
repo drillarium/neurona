@@ -29,13 +29,13 @@ bool debug = false;
 void changeWorkingFolder()
 {
   HMODULE hModule = GetModuleHandle(NULL);
-  if (!hModule) return;
+  if(!hModule) return;
 
   char ownPth[MAX_PATH] = { '\0' };
   GetModuleFileNameA(hModule, ownPth, (sizeof(ownPth)));
   std::string s(ownPth);
   s = s.substr(0, s.find_last_of("\\/"));
-  _chdir(s.c_str());
+  int res = _chdir(s.c_str());
 }
 
 // readParams

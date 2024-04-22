@@ -3,6 +3,8 @@
 #include <thread>
 #include "clock.h"
 
+using namespace std::chrono_literals;
+
 class SyncClock
 {
 public:
@@ -44,7 +46,7 @@ public:
       {
         if((endTime - now) > sleepPrec)
         {
-          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          std::this_thread::sleep_for(1ms);
         }
         now = Clock::instance().elapsed();
       }          
@@ -71,8 +73,6 @@ public:
     if(elapsed > 0)
     {
       ticksPerSecond_ = ((double) (ticks_ * 1000000000LL) / elapsed);
-      // 2 decimals precission
-      ticksPerSecond_ = std::round(ticksPerSecond_ * 100.0) / 100.0;
     }
 
     ticks_++;

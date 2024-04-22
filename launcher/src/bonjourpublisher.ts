@@ -19,32 +19,16 @@ export function initBonjour(name: string, address: string, port: number) {
   logger.info(`Bonjour is running ${JSON.stringify(serviceOptions)}`);
 }
 
-/*
-export function deinitBonjour() {
-  bonjourInstance.destroy();
-  logger.info(`Bonjour destroy`);
-}
-*/
-
+// goodbye message
 export async function deinitBonjour() {
   return new Promise((resolve, reject) => {
-
-    bonjourInstance.unpublishAll(() => {
-      logger.info(`Bonjour destroy`);
-      bonjourInstance?.destroy();
-      resolve({});
-    });
-    
-    /*
-    // goodbye message
     service.stop(() => {
       logger.info(`Bonjour service stop`);
       bonjourInstance.unpublishAll(() => {
         logger.info(`Bonjour destroy`);
         bonjourInstance?.destroy();
-        resolve({});      
+        resolve({});
       });
     });
-    */
   });
 }

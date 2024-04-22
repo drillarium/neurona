@@ -19,6 +19,7 @@ struct RingBuffer
   unsigned int size = 0;
   unsigned int count = 0;
   long long wseq = -1;
+  long long keepAlive = -1;   // producer increment counter every second. Consumer use this counter as keepAlive
 
   /* always last member */
   Message buffer[];
@@ -28,8 +29,8 @@ struct RingBuffer
 
 struct ShMHandle
 {
-  unsigned long long shm_handle = 0;
-  RingBuffer *rb = nullptr;
+  unsigned long long shm_handle = 0;  // shared memory handle  
+  RingBuffer *rb = nullptr;           // ring buffer
 };
 
 ShMHandle shm_init(const char *_shmname, int _messageSize, int _messageCount);

@@ -53,10 +53,24 @@ bool FFMPEGSharedMemoryProducer::write(AVFrameExt *_frame)
   unsigned char *p = data_ + sme.size;
   dataSize = sme.size;
 
-  for(int i = 0; i < AV_NUM_DATA_POINTERS; i++)
+  if(_frame->AVFrame)
   {
-    int  size  = (_frame->AVFrame->linesize[i] * _frame->AVFrame->height) / getDivisorForPlane((AVPixelFormat) _frame->AVFrame->format, i);
-    memcpy(p, _frame->AVFrame->data[i], size);
+    for(int i = 0; i < AV_NUM_DATA_POINTERS; i++)
+    {
+      int size = _frame->AVFrame->linesize[i];
+      if(_frame->mediaType == AVMediaType::AVMEDIA_TYPE_VIDEO)
+      {
+        size = (_frame->AVFrame->linesize[i] * _frame->AVFrame->height) / getDivisorForPlane((AVPixelFormat) _frame->AVFrame->format, i);
+      }
+      memcpy(p, _frame->AVFrame->data[i], size);
+      p += size;
+      dataSize += size;
+    }
+  }
+  if(_frame->AVPacket)
+  {
+    int size = _frame->AVPacket->size;
+    memcpy(p, _frame->AVPacket->data, size);
     p += size;
     dataSize += size;
   }

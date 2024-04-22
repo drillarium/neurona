@@ -4,6 +4,8 @@
 #include "notifier.h"
 #include "FFMPEG_utils.h"
 
+using namespace std::chrono_literals;
+
 FFMPEGSharedMemoryConsumer::FFMPEGSharedMemoryConsumer()
 :SharedMemoryConsumer()
 {
@@ -15,12 +17,11 @@ FFMPEGSharedMemoryConsumer::~FFMPEGSharedMemoryConsumer()
 
 }
 
-bool FFMPEGSharedMemoryConsumer::init(const char *_id)
+bool FFMPEGSharedMemoryConsumer::init(const char *_id, int _msTimeout)
 {
-  bool ret = SharedMemoryConsumer::init(_id);
+  bool ret = SharedMemoryConsumer::init(_id, _msTimeout);
   if(ret)
   {
-    opened_ = true;
     notifyInfo("SM client %s connected", ID_.c_str());
   }
   return ret;
@@ -28,11 +29,9 @@ bool FFMPEGSharedMemoryConsumer::init(const char *_id)
 
 bool FFMPEGSharedMemoryConsumer::deinit()
 {
-  if(!opened_) return true;
   bool ret = SharedMemoryConsumer::deinit();
   if(ret)
   {
-    opened_ = false;
     notifyInfo("SM client %s disconnected", ID_.c_str());
   }
   return ret;
@@ -45,48 +44,67 @@ extern "C" {
 AVFrameExt * FFMPEGSharedMemoryConsumer::read()
 {
   AVFrameExt *ret = nullptr;
-  unsigned char *data = nullptr;
-  if(SharedMemoryConsumer::read(&data))
-  {
-    // check last messageID
-    if(lastMessageID_ == lastAVFrameID_)
-    {
-      if(repeatStartTime_ < 0)
-      {
-        repeatStartTime_ = Clock::instance().elapsed();
-      }
-      else
-      {
-        long long elapsed = Clock::instance().elapsed() - repeatStartTime_;
-        if(elapsed >= repeatTimeOut)
-        {
-          deinit();
-        }
-      }
-    }
-    else
-    {
-      repeatStartTime_ = -1;
-      lastAVFrameID_ = lastMessageID_;
- 
-      FFMPEGSMElement *fe = (FFMPEGSMElement *) data;
+  bool timeout = false;
 
-      AVFrame *videoFrame = av_frame_alloc();
-      if(videoFrame)
+  long long startTime = Clock::instance().elapsed();
+  long long timeoutTime = startTime + (msTimeout_ * 1000000LL);
+  
+  while(!timeout)
+  {
+    if(SharedMemoryConsumer::read())
+    {
+      if( (lastMsgID_ == 0) || (msgID_ != lastMsgID_) )
       {
-        videoFrame->width = fe->width;
-        videoFrame->height = fe->height;
-        videoFrame->format = fe->format;
-        videoFrame->duration = fe->duration;
-        const unsigned char *videoBuffer = (const unsigned char *) (fe + 1);
-        av_image_fill_arrays(videoFrame->data, videoFrame->linesize, videoBuffer, (AVPixelFormat) videoFrame->format, videoFrame->width, videoFrame->height, 32);      
+        lastMsgID_ = msgID_;
+
+        FFMPEGSMElement *fe = (FFMPEGSMElement *) data_;
 
         ret = new AVFrameExt();
         ret->timeBase = fe->timebase;
-        ret->AVFrame = frameDeepClone(videoFrame);
         ret->fieldOrder = fe->fieldOrder;
+        ret->mediaType = fe->mediaType;
+        ret->streamIndex = fe->streamIndex;
+
+        if( (fe->mediaType == AVMediaType::AVMEDIA_TYPE_VIDEO) || (fe->mediaType == AVMediaType::AVMEDIA_TYPE_AUDIO) )
+        {
+          AVFrame *avFrame = av_frame_alloc();
+          if(avFrame)
+          {
+            avFrame->width = fe->width;
+            avFrame->height = fe->height;
+            avFrame->format = fe->format;
+            avFrame->duration = fe->duration;
+            unsigned char *avBuffer = (unsigned char *) (fe + 1);
+            int dataOffset = 0;
+            if(fe->mediaType == AVMediaType::AVMEDIA_TYPE_VIDEO)
+            {
+              av_image_fill_arrays(avFrame->data, avFrame->linesize, avBuffer, (AVPixelFormat) avFrame->format, avFrame->width, avFrame->height, 1);
+            }
+            else if(fe->mediaType == AVMediaType::AVMEDIA_TYPE_AUDIO)
+            {
+              avFrame->data[0] = avBuffer;
+              avFrame->linesize[0] = fe->linesize[0];
+            }
+            ret->AVFrame = avFrame;
+          }
+        }
+        else if(fe->mediaType == AVMEDIA_TYPE_DATA)
+        {
+          AVPacket *packet = av_packet_alloc();
+          if(packet)
+          {
+            packet->size = fe->packetSize;
+            unsigned char *dataBuffer = (unsigned char*) (fe + 1);
+            packet->data = dataBuffer;
+            ret->AVPacket = packet;
+          }
+        }
+        break;
       }
     }
+
+    std::this_thread::sleep_for(1ms);
+    timeout = Clock::instance().elapsed() >= timeoutTime;
   }
 
   return ret;
