@@ -7,17 +7,17 @@ export interface AppConfig {
   uid: string;
   name: string;
   interface: string;
-  apps: string;
   logs: string;
+  publicFolder: string;
 }
 
 const defaultConfig: AppConfig = {
-    port: 51500,
+    port: 58338,
     uid: uuidv4(),
     name: os.hostname(),
     interface: "0.0.0.0",
-    apps: "./apps",
-    logs: "./logs"
+    logs: "./logs",
+    publicFolder: "./www",
 };
 
 export function readConfig(): AppConfig {

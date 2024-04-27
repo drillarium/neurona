@@ -5,6 +5,8 @@ class MultiviewerListComponent extends StatefulWidget {
   final List<String> itemList;
   final Function() onAddItem;
   final Function(int) onRemoveItem;
+  final Function(int) onMoveUpItem;
+  final Function(int) onMoveDownItem;
 
   const MultiviewerListComponent({
     super.key,
@@ -12,6 +14,8 @@ class MultiviewerListComponent extends StatefulWidget {
     required this.itemList,
     required this.onAddItem,
     required this.onRemoveItem,
+    required this.onMoveUpItem,
+    required this.onMoveDownItem,
   });
 
   @override
@@ -58,6 +62,23 @@ class _MultiviewerListComponentState extends State<MultiviewerListComponent> {
                         ? null
                         : () => widget.onRemoveItem(_selectedIndex),
                   ),
+                  IconButton(
+                      icon: const Icon(Icons.arrow_upward),
+                      onPressed: _selectedIndex <= 0
+                          ? null
+                          : () {
+                              widget.onMoveUpItem(_selectedIndex);
+                              _selectedIndex--;
+                            }),
+                  IconButton(
+                      icon: const Icon(Icons.arrow_downward),
+                      onPressed: _selectedIndex < 0 ||
+                              _selectedIndex >= widget.itemList.length - 1
+                          ? null
+                          : () {
+                              widget.onMoveDownItem(_selectedIndex);
+                              _selectedIndex++;
+                            }),
                 ],
               ),
             ],

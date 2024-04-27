@@ -11,12 +11,15 @@ class AppSidebar extends StatelessWidget {
   final Function(int) onAppSelected;
   final Function() onLogout;
   final int selectedApp;
+  final String username;
 
-  const AppSidebar(
-      {super.key,
-      required this.onAppSelected,
-      required this.selectedApp,
-      required this.onLogout});
+  const AppSidebar({
+    super.key,
+    required this.onAppSelected,
+    required this.selectedApp,
+    required this.onLogout,
+    required this.username,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -64,9 +67,12 @@ class AppSidebar extends StatelessWidget {
                   Provider.of<ThemeProvider>(context, listen: false)
                       .toggleTheme(),
             ),
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => onLogout(),
+            Tooltip(
+              message: username,
+              child: IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () => onLogout(),
+              ),
             ),
           ],
         ),

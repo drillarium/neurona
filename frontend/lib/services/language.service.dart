@@ -4,9 +4,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 const Map<String, Map<String, String>> translations = {
   'en': {
     "hello": "Hello",
+    "login": "Login",
   },
   'fr': {
     "hello": "Allo",
+    "login": "Login",
   }
 };
 

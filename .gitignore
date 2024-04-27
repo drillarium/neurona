@@ -67,3 +67,9 @@ launcher/package-lock.json
 launcher/config.json
 /launcher/logs
 /launcher/dist
+/backend/logs
+/backend/node_modules
+backend/package-lock.json
+/backend/www
+backend/config.json
+frontend/pubspec.lock

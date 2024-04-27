@@ -64,10 +64,11 @@ Offset componentDeltaPosToScreenPos(LTWH ltwm, Size size, Offset pos) {
 class _MultiviewerCanvasComponentState
     extends State<MultiviewerCanvasComponent> {
   List<RectData> rectangles = [
-    RectData(const Offset(50.0, 50.0), const Size(100, 100), screenSize),
-    RectData(const Offset(150.0, 150.0), const Size(100, 100), screenSize),
+    RectData(
+        const Offset(50.0, 50.0), const Size(100, 100), screenSize, "Input 1"),
+    RectData(const Offset(150.0, 150.0), const Size(100, 100), screenSize,
+        "Input 2"),
   ];
-
   int selectedIndex = -1;
   ResizeMode resizeMode = ResizeMode.noResize;
   Offset? startDragPosition;
@@ -241,12 +242,27 @@ class RectanglePainter extends CustomPainter {
     // rectangle
     LTWH ltwh = componentToScreen(size, screenSize);
 
-    // Draw the red rectangle
+    // Draw the black rectangle
     Paint paint = Paint()..color = Colors.black;
     canvas.drawRect(
       Rect.fromLTWH(ltwh.l, ltwh.t, ltwh.w, ltwh.h),
       paint,
     );
+
+    // dimensions
+    TextPainter hpainter = TextPainter(
+      text: TextSpan(
+        text: '${screenSize.width.toInt()}x${screenSize.height.toInt()}',
+        style: const TextStyle(
+          color: Colors.green,
+          fontSize: 10.0,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+
+    hpainter.layout();
+    hpainter.paint(canvas, Offset(ltwh.l + 5, ltwh.t + 5));
 
     Paint borderPaint = Paint()
       ..color = Colors.green
@@ -448,6 +464,22 @@ class RectanglePainter extends CustomPainter {
             canvas,
             Offset(componentRect.bottomCenter.dx + 10,
                 componentRect.bottomCenter.dy + 10));
+
+        TextPainter spainter = TextPainter(
+          text: TextSpan(
+            text:
+                '${rectangles[i].size.width.toInt()}x${rectangles[i].size.height.toInt()} px\n${rectangles[i].name}',
+            style: const TextStyle(
+              color: Colors.green,
+              fontSize: 10.0,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+
+        spainter.layout();
+        spainter.paint(
+            canvas, Offset(componentRect.left + 5, componentRect.top + 5));
       }
     }
   }
@@ -462,10 +494,12 @@ class RectanglePainter extends CustomPainter {
 class RectData {
   Offset _position;
   Size _size;
+  final String _name;
   final Size _screenSize;
   static Size minSize = const Size(30, 30);
 
-  RectData(Offset initialPosition, Size initialSize, Size screenSize)
+  RectData(
+      Offset initialPosition, Size initialSize, Size screenSize, this._name)
       : _position = initialPosition,
         _size = initialSize,
         _screenSize = screenSize;
@@ -475,6 +509,7 @@ class RectData {
 
   Size get size => _size;
   Offset get position => _position;
+  String get name => _name;
 
   set size(Size value) {
     double width =

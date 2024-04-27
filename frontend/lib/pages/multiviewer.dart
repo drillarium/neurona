@@ -48,6 +48,20 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                         widget._listLayouts.removeAt(index);
                         setState(() {});
                       },
+                      onMoveDownItem: (int index) {
+                        final String temp = widget._listLayouts[index];
+                        widget._listLayouts[index] =
+                            widget._listLayouts[index + 1];
+                        widget._listLayouts[index + 1] = temp;
+                        setState(() {});
+                      },
+                      onMoveUpItem: (int index) {
+                        final String temp = widget._listLayouts[index];
+                        widget._listLayouts[index] =
+                            widget._listLayouts[index - 1];
+                        widget._listLayouts[index - 1] = temp;
+                        setState(() {});
+                      },
                     ),
                   ),
                 ),
@@ -67,6 +81,20 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                         widget._listInputs.removeAt(index);
                         setState(() {});
                       },
+                      onMoveDownItem: (int index) {
+                        final String temp = widget._listInputs[index];
+                        widget._listInputs[index] =
+                            widget._listInputs[index + 1];
+                        widget._listInputs[index + 1] = temp;
+                        setState(() {});
+                      },
+                      onMoveUpItem: (int index) {
+                        final String temp = widget._listInputs[index];
+                        widget._listInputs[index] =
+                            widget._listInputs[index - 1];
+                        widget._listInputs[index - 1] = temp;
+                        setState(() {});
+                      },
                     ),
                   ),
                 ),
@@ -84,6 +112,20 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                       },
                       onRemoveItem: (int index) {
                         widget._listOutputs.removeAt(index);
+                        setState(() {});
+                      },
+                      onMoveDownItem: (int index) {
+                        final String temp = widget._listOutputs[index];
+                        widget._listOutputs[index] =
+                            widget._listOutputs[index + 1];
+                        widget._listOutputs[index + 1] = temp;
+                        setState(() {});
+                      },
+                      onMoveUpItem: (int index) {
+                        final String temp = widget._listOutputs[index];
+                        widget._listOutputs[index] =
+                            widget._listOutputs[index - 1];
+                        widget._listOutputs[index - 1] = temp;
                         setState(() {});
                       },
                     ),
