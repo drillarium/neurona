@@ -4,10 +4,15 @@ import { Version, getCurrentVersion } from './version';
 import { AddressInfo } from 'net';
 import { initLogger, logger } from './logger';
 import * as cors from "cors";                     // cors (cross origin)
-import { createWebsocketServer } from './wsserver';
 import { userRouter } from './users/user.router';
 import { AppDataBase } from './db';
 import path = require('path');
+import { multiviewerRouter } from './multiviewer/multiviewer.router';
+import { MultiviewerApp } from './multiviewer/multiviewer.app';
+import { LauncherApp } from './launcher/launcher.app';
+import { launcherRouter } from './launcher/launcher.router';
+import { v4 as uuidv4 } from 'uuid';
+import { WebSocketService } from './services/ws.service';
 
 // config
 const config: AppConfig = readConfig();
@@ -15,6 +20,9 @@ const config: AppConfig = readConfig();
 const version: Version = getCurrentVersion();
 // DB
 const db = AppDataBase.getInstance();
+// Apps
+const multiviewerApp = MultiviewerApp.getInstance();
+const launcherApps = LauncherApp.getInstance();
 
 // logger
 initLogger(config);
@@ -24,9 +32,16 @@ logger.info(`App started version: ${version.version} config: ${JSON.stringify(co
 
 // express
 const app = express();
+
+// vars
 const PORT = config.port;
 const INTERFACE = config.interface;
 const PUBLIC_FOLDER = config.publicFolder;
+const DB = config.db;
+const UID = config.uid;
+const session = uuidv4();
+
+logger.info(`Session UID: ${session}`);
 
 // parse incoming requests with JSON payload
 app.use(express.json());
@@ -36,39 +51,58 @@ app.use(cors());
 
 // router
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/multiviewer", multiviewerRouter);
+app.use("/api/v1/launchers", launcherRouter);
 
 // Serve static files from the public folder
 app.use(express.static(PUBLIC_FOLDER));
 
 // Route for serving the Flutter app
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.sendFile(path.join(PUBLIC_FOLDER, 'index.html'));
 });
 
 // server
-const server = app.listen(PORT, INTERFACE, () => {
+const server = app.listen(PORT, INTERFACE, async () => {
   const { address, port } = server.address() as AddressInfo;
   logger.info(`Server is running on ${address}:${port}`);
 
-  // create websocket
-  createWebsocketServer(server);
+  // init db sync (default users and launchers must be created)
+  try {
+    await db.init(DB);
+  }
+  catch (error) {
+    logger.error('Error init DB:', error);
+  }
+
+  // apps
+  launcherApps.init(UID, session);
+  multiviewerApp.init();
+
+// create websocket
+  const wss : WebSocketService = WebSocketService.getInstance();
+  wss.init({server});
 });
 
 function tearDown(signal: string, errorCode: number = 0) {
   logger.info(`Application ending -- ${signal} --`);
 
   // Close server
-  server.close(async () => {
-    logger.info('Server closed.');
+  server.close();
 
-    // Close the database connection
-    db.close();
+  logger.info('Server closed.');
 
-    logger.info(`Application ends`);
+  // apps
+  launcherApps.deinit();
+  multiviewerApp.deinit();
 
-    // exit process
-    process.exit(errorCode);
-  });
+  // Close the database connection
+  db.close();
+
+  logger.info(`Application ends`);
+
+  // exit process
+  process.exit(errorCode);
 }
 
 process.on('SIGTERM', () => { tearDown("SIGTERM") });

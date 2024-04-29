@@ -9,6 +9,7 @@ export interface AppConfig {
   interface: string;
   logs: string;
   publicFolder: string;
+  db: string;
 }
 
 const defaultConfig: AppConfig = {
@@ -18,6 +19,7 @@ const defaultConfig: AppConfig = {
     interface: "0.0.0.0",
     logs: "./logs",
     publicFolder: "./www",
+    db: "backend.db"
 };
 
 export function readConfig(): AppConfig {

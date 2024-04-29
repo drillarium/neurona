@@ -4,10 +4,9 @@ import { Version, getCurrentVersion } from './version';
 import { AddressInfo } from 'net';
 import { initLogger, logger } from './logger';
 import * as cors from "cors";                     // cors (cross origin)
-import { createWebsocketServer } from './wsserver';
 import { appsRouter } from './app/app.router';
 import { AppController } from './app/app.controller';
-import { deinitBonjour, initBonjour } from './bonjourpublisher';
+import { WebSocketService } from './services/ws.service';
 
 // current version
 const config: AppConfig = readConfig();
@@ -39,14 +38,8 @@ const server = app.listen(PORT, INTERFACE, () => {
   logger.info(`Server is running on ${address}:${port}`);
 
   // create websocket
-  createWebsocketServer(server);
-
-  // init bonjour
-  const name = `LAUNCHER#${config.uid}`;
-  initBonjour(name, address, port);
-
-  // test "goodbye not working"
-  // setTimeout(() => { deinitBonjour(); }, 5000);
+  const wss : WebSocketService = WebSocketService.getInstance();
+  wss.init({server});
 
   // init
   appController.init(config);
@@ -56,22 +49,17 @@ function tearDown(signal: string, errorCode: number = 0) {
   logger.info(`Application ending -- ${signal} --`);
 
   // Close server
-  server.close(async () => {
-    logger.info('Server closed.');
+  server.close();
 
-    // bonjour
-    await deinitBonjour();
+  logger.info('Server closed.');
 
-    // app
-    appController.deinit();
+  // app
+  appController.deinit();
 
-    setTimeout(() => {
-      logger.info(`Application ends`);
+  logger.info(`Application ends`);
 
-      // exit process
-      process.exit(errorCode);
-    }, 2000);
-  });
+  // exit process
+  process.exit(errorCode);
 }
 
 process.on('SIGTERM', () => { tearDown("SIGTERM") });

@@ -61,9 +61,6 @@ userRouter.post("/", async(req: Request, res: Response) => {
 // POST user
 userRouter.post("/validate", async(req: Request, res: Response) => {
   const user = req.body;
-
-  console.log(user);
-
   try {
     const isValidUser = await db.validateUser(user.email, user.password);
     if(isValidUser) {
