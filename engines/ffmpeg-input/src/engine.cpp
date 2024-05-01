@@ -603,6 +603,7 @@ bool FFMPEGInputEngine::run(const char *_JsonConfig)
 void FFMPEGInputEngine::workerThreadFunc()
 {
   openReader_ = true;
+  bool notifyErr = true;
 
   while(!abort_)
   {
@@ -626,7 +627,11 @@ void FFMPEGInputEngine::workerThreadFunc()
       if(avformat_open_input(&formatCtx_, url_.c_str(), nullptr, &dict) < 0)
       {
         av_dict_free(&dict);
-        notifyError("Could not open input file: %s", url_.c_str());
+        if(notifyErr)
+        {
+          notifyError("Could not open input file: %s", url_.c_str());
+          notifyErr = false;
+        }
       }
       else
       {
@@ -634,7 +639,11 @@ void FFMPEGInputEngine::workerThreadFunc()
         if(avformat_find_stream_info(formatCtx_, nullptr) < 0)
         {
           av_dict_free(&dict);
-          notifyError("Could not find stream information: %s", url_.c_str());
+          if(notifyErr)
+          {
+            notifyError("Could not find stream information: %s", url_.c_str());
+            notifyErr = false;
+          }
         }
         else
         {
@@ -660,7 +669,8 @@ void FFMPEGInputEngine::workerThreadFunc()
           
           av_dict_free(&dict);
           notifyInfo("Stream opened: %s", url_.c_str());
-          openReader_ = false;          
+          openReader_ = false;       
+          notifyErr = true;
         }
       }
     } 

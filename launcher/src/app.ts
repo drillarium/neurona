@@ -1,4 +1,5 @@
 import * as express from 'express';         // express
+import { Request, Response } from "express";  // express 
 import { AppConfig, readConfig } from './config';
 import { Version, getCurrentVersion } from './version';
 import { AddressInfo } from 'net';
@@ -31,6 +32,11 @@ app.use(cors());
 
 // router
 app.use("/api/v1/apps", appsRouter);
+
+// configuration
+app.get('/api/v1/config', (_req: Request, res: Response) => {
+  res.status(200).json(config);
+});
 
 // server
 const server = app.listen(PORT, INTERFACE, () => {

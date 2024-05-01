@@ -31,26 +31,26 @@ launcherRouter.get("/", async(req: Request, res: Response) => {
 
 // POST launcher
 launcherRouter.post("/", async(req: Request, res: Response) => {
-    const address = req.body;
-    try {
-      await db.addLauncher(address.address);
-      res.status(200).send();
-    }
-    catch(error: any) {
-      logger.error(`POST "/" ${address} ${JSON.stringify(error)}`);
-      res.status(400).send(error.message);
-    }
-  });
+  const address = req.body;
+  try {
+    await db.addLauncher(address.address);
+    res.status(200).send();
+  }
+  catch(error: any) {
+    logger.error(`POST "/" ${address} ${JSON.stringify(error)}`);
+    res.status(400).send(error.message);
+  }
+});
 
-  // DELETE user
-  launcherRouter.delete("/:id", async(req: Request, res: Response) => {
-    const id = req?.params?.id;
-    try {
-      await db.deleteLauncher(parseInt(id));
-      res.status(200).send();
-    }
-    catch(error: any) {
-      logger.error(`DELETE "/:id" ${JSON.stringify(error)}`);
-      res.status(400).send(error.message);
-    }
-  });
+// DELETE launcher
+launcherRouter.delete("/:id", async(req: Request, res: Response) => {
+  const id = req?.params?.id;
+  try {
+    await db.deleteLauncher(parseInt(id));
+    res.status(200).send();
+  }
+  catch(error: any) {
+    logger.error(`DELETE "/:id" ${JSON.stringify(error)}`);
+    res.status(400).send(error.message);
+  }
+});

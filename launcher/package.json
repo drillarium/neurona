@@ -7,8 +7,7 @@
     "dev": "nodemon src/app.ts",
     "prod": "set NODE_ENV=production&&tsc&&node dist/app.js",
     "build": "tsc",
-    "start": "npm run prod",
-    "test": "nodemon src/test/bonjourlistener.ts"
+    "start": "npm run prod"
   },
   "keywords": [],
   "author": "",

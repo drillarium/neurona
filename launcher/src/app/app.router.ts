@@ -155,7 +155,7 @@ appsRouter.put("/command/:command/:appuid", async(req: Request, res: Response) =
   const appuid = req?.params?.appuid;
   const params = req.body;
   try {
-    const { result, error } = await appController.runCommand(appuid, command, params);
+    const { result, error } = appController.runCommand(appuid, command, params);
     if(!result) {
       throw new Error(error);
     }
