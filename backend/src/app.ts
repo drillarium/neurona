@@ -67,21 +67,23 @@ const server = app.listen(PORT, INTERFACE, async () => {
   const { address, port } = server.address() as AddressInfo;
   logger.info(`Server is running on ${address}:${port}`);
 
-  // init db sync (default users and launchers must be created)
   try {
+    // init db sync (default users and launchers must be created)
     await db.init(DB);
-  }
-  catch (error) {
-    logger.error('Error init DB:', error);
-  }
 
-  // apps
-  launcherApps.init(UID, session);
-  multiviewerApp.init();
+    // apps
+    launcherApps.init(UID, session);
 
-// create websocket
-  const wss : WebSocketService = WebSocketService.getInstance();
-  wss.init({server});
+    // wait available scenes loaded from db
+    await multiviewerApp.init();
+
+    // create websocket
+    const wss : WebSocketService = WebSocketService.getInstance();
+    wss.init({server});
+
+  } catch (error) {
+    logger.error('Error init app:', error);
+  }
 });
 
 function tearDown(signal: string, errorCode: number = 0) {

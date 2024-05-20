@@ -15,25 +15,36 @@ export interface IDestination {
 
 // ILayout
 export interface ILayout {
+    id: number;
     uid: string;
+    user: string;
+    launcher: string;
     width: number;
-    height: number;
+    height: number;    
     components: IComponent[];
     destinations: IDestination[];
 }
 
-// MultiviewerScene
-export class MultiviewerScene {
+// LayoutScene
+export class LayoutScene {
     private launcherUID: string = "";
     private layout_: ILayout | null = null;
 
-    public init(launcherUID: string, layout: ILayout) {
-        this.launcherUID = launcherUID;
+    public init(layout: ILayout) {
+        this.launcherUID = layout.launcher;
         this.layout_ = layout;
     }
 
+    public deinit() {
+        
+    }
+
     public get uid() : string {
-        return this.layout? this.layout.uid : "";
+        return this.layout.uid;
+    }
+
+    public get id() : number {
+        return this.layout.id;
     }
 
     public get layout(): ILayout {

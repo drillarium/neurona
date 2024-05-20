@@ -29,19 +29,21 @@ userRouter.get("/", async(req: Request, res: Response) => {
   }
 });
 
-// GET user by email
-userRouter.get("/:email", async(req: Request, res: Response) => {
-  try {
-    const email = req?.params?.email;
-    const user = await db.getUserByEmail(email);
-    if(!user) {
-      throw new Error(`User ${email} not found`);
-    }
+// GET user by email or name
+userRouter.get("/:emailorname", async(req: Request, res: Response) => {
+  const emailorname = req?.params?.emailorname;
+  try {    
+    const user = await db.getUserByEmail(emailorname);
     res.status(200).send(user);
   }
   catch(error: any) {
-    logger.error(`GET "/:id" ${JSON.stringify(error)}`);
-    res.status(400).send(error.message);
+    try {  
+    const user = await db.getUserByName(emailorname);
+    res.status(200).send(user);
+    } catch(error: any) {
+      logger.error(`GET "/:emailorname" ${error.message}`);
+      res.status(400).send(error.message);
+    }
   }
 });
 
@@ -62,17 +64,22 @@ userRouter.post("/", async(req: Request, res: Response) => {
 userRouter.post("/validate", async(req: Request, res: Response) => {
   const user = req.body;
   try {
-    const isValidUser = await db.validateUser(user.email, user.password);
+    const isValidUser = await db.validateUserByEmail(user.emailorname, user.password);
     if(isValidUser) {
       res.status(200).send();
     }
     else {
-      throw new Error(`User ${user.email} not found or invalid password`);
+      const isValidUser = await db.validateUserByName(user.emailorname, user.password);
+      if(isValidUser) {
+        res.status(200).send();
+      } else {
+        throw new Error(`User ${user.email} not found or invalid password`);
+      }
     }
   }
   catch(error: any) {
-    logger.error(`POST "/" ${user} ${JSON.stringify(error)}`);
-    res.status(400).send(error.message);
+    logger.error(`POST "/" ${JSON.stringify(user)} ${error.message}`);
+    res.status(400).send(error.message);    
   }
 });
 

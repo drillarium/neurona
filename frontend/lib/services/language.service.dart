@@ -3,12 +3,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 const Map<String, Map<String, String>> translations = {
   'en': {
-    "hello": "Hello",
-    "login": "Login",
+    "login": "Login with your Account",
+    "register": "Hi, welcome to Neurona",
   },
-  'fr': {
-    "hello": "Allo",
-    "login": "Login",
+  'es': {
+    "login": "Inicie sesión con su cuenta",
+    "register": "Hola, bienvenido a Neurona",
   }
 };
 
@@ -55,7 +55,7 @@ class LanguageService {
   static List<Locale> get supportedLocales {
     return [
       const Locale('en', 'US'), // English
-      const Locale('fr', 'FR'), // Spanish
+      const Locale('es', 'ES'), // Spanish
     ];
   }
 

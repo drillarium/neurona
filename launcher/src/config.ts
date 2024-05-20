@@ -12,7 +12,7 @@ export interface AppConfig {
 }
 
 const defaultConfig: AppConfig = {
-    port: 51500,
+    port: 5555,
     uid: uuidv4(),
     name: os.hostname(),
     interface: "0.0.0.0",

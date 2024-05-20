@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:neurona/provider/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-const int app1ID = 0;
-const int app2ID = 1;
-const int app3ID = 2;
-const int app4ID = 3;
+const int multiviewerAPP = 0;
+const int videoMixerAPP = 1;
+const int studioApp = 2;
 
 class AppSidebar extends StatelessWidget {
   final Function(int) onAppSelected;
@@ -29,24 +29,52 @@ class AppSidebar extends StatelessWidget {
         Column(
           children: [
             IconButton(
-              icon: const Icon(Icons.home),
-              onPressed: () => onAppSelected(app1ID),
-              color: selectedApp == app1ID ? Colors.blue : Colors.black,
+              icon: SvgPicture.asset(
+                'images/multiviewer.svg',
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                    selectedApp == multiviewerAPP
+                        ? Colors.blue
+                        : Provider.of<ThemeProvider>(context).isDarkMode
+                            ? Colors.white
+                            : Colors.black,
+                    BlendMode.srcIn),
+              ),
+              tooltip: "Multiviewer",
+              onPressed: () => onAppSelected(multiviewerAPP),
             ),
             IconButton(
-              icon: const Icon(Icons.message),
-              onPressed: () => onAppSelected(app2ID),
-              color: selectedApp == app2ID ? Colors.blue : Colors.black,
+              icon: SvgPicture.asset(
+                'images/videomixer.svg',
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                    selectedApp == videoMixerAPP
+                        ? Colors.blue
+                        : Provider.of<ThemeProvider>(context).isDarkMode
+                            ? Colors.white
+                            : Colors.black,
+                    BlendMode.srcIn),
+              ),
+              tooltip: "Videomixer",
+              onPressed: () => onAppSelected(videoMixerAPP),
             ),
             IconButton(
-              icon: const Icon(Icons.notifications),
-              onPressed: () => onAppSelected(app3ID),
-              color: selectedApp == app3ID ? Colors.blue : Colors.black,
-            ),
-            IconButton(
-              icon: const Icon(Icons.account_circle),
-              onPressed: () => onAppSelected(app4ID),
-              color: selectedApp == app4ID ? Colors.blue : Colors.black,
+              icon: SvgPicture.asset(
+                'images/studio.svg',
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                    selectedApp == studioApp
+                        ? Colors.blue
+                        : Provider.of<ThemeProvider>(context).isDarkMode
+                            ? Colors.white
+                            : Colors.black,
+                    BlendMode.srcIn),
+              ),
+              tooltip: "Studio",
+              onPressed: () => onAppSelected(studioApp),
             ),
           ],
         ),
@@ -57,20 +85,24 @@ class AppSidebar extends StatelessWidget {
                 builder: (context, themeProvider, child) {
                   return Icon(
                     themeProvider.isDarkMode
-                        ? Icons.brightness_4
-                        : Icons.brightness_7,
-                    color: Colors.black,
+                        ? Icons.brightness_7
+                        : Icons.brightness_1,
+                    color:
+                        themeProvider.isDarkMode ? Colors.white : Colors.black,
                   );
                 },
               ),
               onPressed: () =>
                   Provider.of<ThemeProvider>(context, listen: false)
                       .toggleTheme(),
+              tooltip: Provider.of<ThemeProvider>(context).isDarkMode
+                  ? "Light"
+                  : "Dark",
             ),
             Tooltip(
               message: username,
               child: IconButton(
-                icon: const Icon(Icons.settings),
+                icon: const Icon(Icons.person),
                 onPressed: () => onLogout(),
               ),
             ),

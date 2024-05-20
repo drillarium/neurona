@@ -2,6 +2,7 @@ import * as sqlite3 from 'sqlite3';
 import { User } from './users/user.model';
 import { Launcher } from './launcher/launcher.model';
 import { logger } from './logger';
+import { ILayout } from './multiviewer/layout.scene';
 
 // database
 export class AppDataBase {
@@ -23,10 +24,11 @@ export class AppDataBase {
                             email TEXT NOT NULL UNIQUE,
                             password TEXT,
                             isAdmin BOOLEAN
-                    )`);
+                )`);
+
                 // Add admin user if not already exists
                 const adminUsername = 'admin';
-                const adminPassword = 'adminpassword';
+                const adminPassword = 'password';
                 this.db.get('SELECT * FROM users WHERE username = ?', [adminUsername], (err, row) => {
                     if (err) {
                         logger.error(err.message);      
@@ -45,6 +47,12 @@ export class AppDataBase {
                         logger.info('Admin user already exists');
                     }
                 });
+
+                // Create a scenes table if does not exist
+                this.db.run(`CREATE TABLE IF NOT EXISTS scenes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    scene JSON
+                )`);
     
                 // Create launchers table if it does not exist
                 this.db.run(`CREATE TABLE IF NOT EXISTS launchers (
@@ -111,13 +119,13 @@ export class AppDataBase {
         });
     }
 
-    public async getUserById(userId: number): Promise<User | undefined> {
+    public async getUserById(userId: number): Promise<User> {
         return new Promise((resolve, reject) => {
             this.db.get('SELECT * FROM users WHERE id = ?', [userId], (err, row : any) => {
                 if (err) {
                     reject(err);
                 } else if (!row) {
-                    resolve(undefined);
+                    reject("User not found");
                 } else {
                     const user = new User(row.id, row.username, row.email, row.password, row.isAdmin);
                     resolve(user);
@@ -126,13 +134,13 @@ export class AppDataBase {
         });
     }
 
-    public async getUserByEmail(email: string): Promise<User | undefined> {
+    public async getUserByEmail(email: string): Promise<User> {
         return new Promise((resolve, reject) => {
             this.db.get('SELECT * FROM users WHERE email = ?', [email], (err, row : any) => {
                 if (err) {
                     reject(err);
                 } else if (!row) {
-                    resolve(undefined);
+                    reject(new Error(`User ${email} not found`));
                 } else {
                     const user = new User(row.id, row.username, row.email, row.password, row.isAdmin);
                     resolve(user);
@@ -140,6 +148,21 @@ export class AppDataBase {
             });
         });
     }
+
+    public async getUserByName(name: string): Promise<User> {
+        return new Promise((resolve, reject) => {
+            this.db.get('SELECT * FROM users WHERE username = ?', [name], (err, row : any) => {
+                if (err) {
+                    reject(err);
+                } else if (!row) {
+                    reject(new Error(`User ${name} not found`));
+                } else {
+                    const user = new User(row.id, row.username, row.email, row.password, row.isAdmin);
+                    resolve(user);
+                }
+            });
+        });
+    }    
 
     public async updateUser(user: User): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -165,18 +188,31 @@ export class AppDataBase {
         });
     }
 
-    public validateUser(email: string, password: string): Promise<boolean> {
+    public validateUserByEmail(email: string, password: string): Promise<boolean> {
         const query = 'SELECT * FROM users WHERE email = ? AND password = ?';
         return new Promise((resolve, reject) => {
             this.db.get(query, [email, password], (err, row) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(!!row); // If row exists, user is valid
+                    resolve(!!row);
                 }
             });
         });
     }
+
+    public validateUserByName(name: string, password: string): Promise<boolean> {
+        const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
+        return new Promise((resolve, reject) => {
+            this.db.get(query, [name, password], (err, row) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(!!row);
+                }
+            });
+        });
+    }    
 
     public loadLaunchers() : Promise<Launcher[]>{
         return new Promise((resolve, reject) => {
@@ -217,7 +253,60 @@ export class AppDataBase {
         });
     }
 
+    // load scenes
+    public async loadScenes(): Promise<ILayout[]> {
+        return new Promise((resolve, reject) => {
+            this.db.all('SELECT * FROM scenes', (err, rows: any[]) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    const scenes: ILayout[] = rows.map(row => { return { ... JSON.parse(row.scene), id: row.id }; });
+                    resolve(scenes);
+                }
+            });
+        });
+    }    
+
+    // Function to save a scene
+    public saveScene(scene: ILayout) : Promise<number> {
+        return new Promise((resolve, reject) => {
+            this.db.run('INSERT INTO scenes (scene) VALUES (?)', [JSON.stringify(scene)], function (err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(this.lastID);
+                }
+            });
+        });
+    }
+
+    public async updateScene(scene: ILayout): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.db.run('UPDATE scenes SET scene = ? WHERE id = ?', [JSON.stringify(scene), scene.id], (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }    
+
+    public async deleteScene(sceneId: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.db.run('DELETE FROM scenes WHERE id = ?', [sceneId], (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }    
+
     public close(): void {
-        this.db.close();
+        if(this.db) {
+            this.db.close();
+        }
     }
 }

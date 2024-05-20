@@ -6,38 +6,37 @@ import 'package:neurona/provider/theme_provider.dart';
 import 'package:neurona/services/api.service.dart';
 import 'package:neurona/services/language.service.dart';
 import 'package:provider/provider.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class HomePage extends StatefulWidget {
-  final String email;
+  final String emailorname;
   final String password;
-  const HomePage({super.key, this.email = "", this.password = ""});
+  const HomePage({super.key, this.emailorname = "", this.password = ""});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedApp = app1ID;
+  int _selectedApp = multiviewerAPP;
   bool isSignedIn = false;
   String username = "";
 
   Widget _getCenterApp() {
     switch (_selectedApp) {
-      case app1ID:
+      case multiviewerAPP:
         return MultiviewerPage();
-      case app2ID:
+      case videoMixerAPP:
         return const Center(child: Text('Messages Page'));
-      case app3ID:
+      case studioApp:
         return const Center(child: Text('Notifications Page'));
-      case app4ID:
-        return const Center(child: Text('Profile Page'));
       default:
         return const Center(child: Text('Unknown Page'));
     }
   }
 
   getUserData() async {
-    ApiService.instance?.getUser(widget.email).then((response) {
+    ApiService.instance?.getUser(widget.emailorname).then((response) {
       if (response != null) {
         setState(() {
           if (response.containsKey('username')) {
@@ -51,10 +50,10 @@ class _HomePageState extends State<HomePage> {
 
   checkAuthentication() async {
     ApiService.instance
-        ?.validateUser(widget.email, widget.password)
+        ?.validateUser(widget.emailorname, widget.password)
         .then((response) {
       if (!response) {
-        String error = widget.email.isEmpty && widget.password.isEmpty
+        String error = widget.emailorname.isEmpty && widget.password.isEmpty
             ? ""
             : "Invalid email or wrong password";
 
@@ -92,13 +91,23 @@ class _HomePageState extends State<HomePage> {
 
     return Center(
       child: !isSignedIn
-          ? const CircularProgressIndicator()
+          ? Container(
+              color: Provider.of<ThemeProvider>(context).isDarkMode
+                  ? Colors.black
+                  : Colors.white,
+              child: Center(
+                child: LoadingAnimationWidget.discreteCircle(
+                  color: const Color(0xFF1A1A3F),
+                  size: 200,
+                ),
+              ),
+            )
           : Row(children: [
               Container(
-                width: 80,
+                width: 50,
                 color: Provider.of<ThemeProvider>(context).isDarkMode
-                    ? Colors.grey[300]
-                    : Colors.grey[600],
+                    ? Colors.black
+                    : Colors.white,
                 child: AppSidebar(
                   username: username,
                   selectedApp: _selectedApp,

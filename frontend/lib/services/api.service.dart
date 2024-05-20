@@ -21,8 +21,8 @@ class ApiService {
   static ApiService? get instance => _instance;
 
   // Validate user
-  Future<bool> validateUser(String email, String password) async {
-    final body = jsonEncode({"email": email, "password": password});
+  Future<bool> validateUser(String emailorname, String password) async {
+    final body = jsonEncode({"emailorname": emailorname, "password": password});
     try {
       final response =
           await http.post(Uri.parse('$baseUrl/api/v1/users/validate'),
@@ -49,15 +49,15 @@ class ApiService {
           body: body);
       return response.statusCode == 200;
     } catch (e) {
-      return false;
+      throw ("Server $baseUrl not found");
     }
   }
 
   // Get user data from email
-  Future<Map<String, dynamic>?> getUser(String email) async {
+  Future<Map<String, dynamic>?> getUser(String emailorname) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/v1/users/$email'),
+        Uri.parse('$baseUrl/api/v1/users/$emailorname'),
       );
       if (response.statusCode == 200) {
         // Parse the response body

@@ -235,7 +235,8 @@ class RectanglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // Paint the background in gray color
-    Paint backgroundPaint = Paint()..color = Colors.grey;
+    Paint backgroundPaint = Paint()
+      ..color = const Color.fromRGBO(43, 46, 56, 1);
     canvas.drawRect(
         Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:neurona/provider/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class MultiviewerListComponent extends StatefulWidget {
   final String title;
@@ -36,8 +38,8 @@ class _MultiviewerListComponentState extends State<MultiviewerListComponent> {
       children: [
         // Header with title and buttons
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          color: Colors.grey[700], // Just for demonstration
+          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 0.0),
+          color: Colors.grey[700],
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -46,7 +48,8 @@ class _MultiviewerListComponentState extends State<MultiviewerListComponent> {
                 widget.title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18.0,
+                  fontSize: 14.0,
+                  color: Colors.white,
                 ),
               ),
               // Buttons aligned to the right
@@ -54,16 +57,19 @@ class _MultiviewerListComponentState extends State<MultiviewerListComponent> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.add),
+                    color: Colors.white,
                     onPressed: () => widget.onAddItem(),
                   ),
                   IconButton(
                     icon: const Icon(Icons.remove),
+                    color: _selectedIndex < 0 ? Colors.grey : Colors.white,
                     onPressed: _selectedIndex < 0
                         ? null
                         : () => widget.onRemoveItem(_selectedIndex),
                   ),
                   IconButton(
                       icon: const Icon(Icons.arrow_upward),
+                      color: _selectedIndex <= 0 ? Colors.grey : Colors.white,
                       onPressed: _selectedIndex <= 0
                           ? null
                           : () {
@@ -71,14 +77,19 @@ class _MultiviewerListComponentState extends State<MultiviewerListComponent> {
                               _selectedIndex--;
                             }),
                   IconButton(
-                      icon: const Icon(Icons.arrow_downward),
-                      onPressed: _selectedIndex < 0 ||
-                              _selectedIndex >= widget.itemList.length - 1
-                          ? null
-                          : () {
-                              widget.onMoveDownItem(_selectedIndex);
-                              _selectedIndex++;
-                            }),
+                    icon: const Icon(Icons.arrow_downward),
+                    color: _selectedIndex < 0 ||
+                            _selectedIndex >= widget.itemList.length - 1
+                        ? Colors.grey
+                        : Colors.white,
+                    onPressed: _selectedIndex < 0 ||
+                            _selectedIndex >= widget.itemList.length - 1
+                        ? null
+                        : () {
+                            widget.onMoveDownItem(_selectedIndex);
+                            _selectedIndex++;
+                          },
+                  ),
                 ],
               ),
             ],
@@ -90,21 +101,30 @@ class _MultiviewerListComponentState extends State<MultiviewerListComponent> {
           child: ListView.builder(
             itemCount: widget.itemList.length,
             itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(
-                  widget.itemList[index],
-                  style: TextStyle(
-                    color: _selectedIndex == index
-                        ? Colors.blue
-                        : Colors.black, // Change font color based on selection
+              return SizedBox(
+                height: 40,
+                child: Container(
+                  color: _selectedIndex == index
+                      ? Colors.blue.withOpacity(0.5)
+                      : Colors.transparent,
+                  child: ListTile(
+                    title: Text(
+                      widget.itemList[index],
+                      style: TextStyle(
+                        fontSize: 14.0,
+                        color: Provider.of<ThemeProvider>(context).isDarkMode
+                            ? Colors.white
+                            : Colors.black,
+                      ),
+                    ),
+                    selected: index == _selectedIndex,
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = index;
+                      });
+                    },
                   ),
                 ),
-                selected: index == _selectedIndex,
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = index;
-                  });
-                },
               );
             },
           ),
