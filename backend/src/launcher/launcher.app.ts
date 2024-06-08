@@ -9,7 +9,7 @@ export class LauncherApp {
     // singleton
     private static instance: LauncherApp;
     // list of launchers
-    private launchers: Map<String, LauncherController> = new Map<String, LauncherController>();
+    private launchers: Map<number, LauncherController> = new Map<number, LauncherController>();
 
     private constructor() {}
 
@@ -27,9 +27,9 @@ export class LauncherApp {
         db.loadLaunchers().then((launchers) => {
             launchers.forEach(launcher => {
                 logger.info(`Launcher ${launcher.address} created`);
-                const l = new LauncherController;
-                this.launchers.set(launcher.id.toString(), l);
-                l.init(appUID, sessionUID, launcher.address);
+                const l = new LauncherController;    
+                this.launchers.set(launcher.id, l);
+                l.init(launcher.id, appUID, sessionUID, launcher.address);
             });            
         });
     }
@@ -42,4 +42,11 @@ export class LauncherApp {
         logger.info(`Launcher app deinit`);
     }
 
+    // status
+    public status(launcherID: number) {
+        if(!this.launchers.has(launcherID)) {
+            throw Error("");
+        }
+        return this.launchers.get(launcherID)?.getStatus();
+    }
 }

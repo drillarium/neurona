@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:neurona/components/app_sidebar.dart';
+import 'package:neurona/dialogs/admin.dart';
 import 'package:neurona/pages/login.dart';
 import 'package:neurona/pages/multiviewer.dart';
 import 'package:neurona/provider/theme_provider.dart';
@@ -21,6 +22,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedApp = multiviewerAPP;
   bool isSignedIn = false;
   String username = "";
+  bool isAdmin = false;
 
   Widget _getCenterApp() {
     switch (_selectedApp) {
@@ -41,6 +43,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           if (response.containsKey('username')) {
             username = response['username'];
+            isAdmin = (response['isAdmin'] == 1);
           }
           isSignedIn = true;
         });
@@ -74,6 +77,17 @@ class _HomePageState extends State<HomePage> {
         (Route<dynamic> route) => false,
       );
     });
+  }
+
+  void _showAdminDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return const Center(
+          child: AdminDialog(),
+        );
+      },
+    );
   }
 
   @override
@@ -148,6 +162,11 @@ class _HomePageState extends State<HomePage> {
                       },
                     );
                   },
+                  onAdmin: isAdmin
+                      ? () {
+                          _showAdminDialog(context);
+                        }
+                      : null,
                 ),
               ),
               Expanded(

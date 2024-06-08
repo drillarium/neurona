@@ -1,3 +1,4 @@
+import { AppDataBase } from "../db";
 import { logger } from "../logger";
 import { WebSocket } from 'ws';
 
@@ -26,16 +27,23 @@ export class LauncherController {
     private wsClient_: WebSocket | null = null;
     // address
     private address_: string = "";
+    // UID (DB key)
+    private uid_: number = -1;
+    // available apps
+    private availableApps_: string[] = [];
+    // schema
+    private availableSchemas_: Map<string, any> = new Map<string, any>();
 
     // constructor
-    public constructor() { 
+    public constructor() {
     }
 
     public get connected() { return this.connected_; }
 
     // init
-    public init(appUID: string, sessionUID: string, address: string) {
+    public init(launcherUID: number, appUID: string, sessionUID: string, address: string) {
         this.address_ = address;
+        this.uid_ = launcherUID;
         this.connect(appUID, sessionUID);
     }
 
@@ -51,8 +59,28 @@ export class LauncherController {
             logger.info(`Launcher ${this.address_} connected`);
 
             try {
+                // configuration
                 this.config_ = await this.getCongig();
                 logger.info(`Launcher ${this.address_} configuration is ${JSON.stringify(this.config_)}`);
+
+                // available apps
+                this.availableApps_ = await this.getAvailableApps();
+                logger.info(`Launcher ${this.address_} available apps are ${JSON.stringify(this.availableApps_)}`);
+
+                // schema                
+                for(var i = 0; i < this.availableApps_.length; i++) {
+                    this.availableSchemas_.set(this.availableApps_[i], {});
+                    try {
+                        const schema = await this.getAppSchema(this.availableApps_[i]);
+                        this.availableSchemas_.set(this.availableApps_[i], schema);
+                    }
+                    catch(error) {
+                    }    
+                }
+
+                // save to DB. Schemas can be used case launcher not present to configure apps
+                const db = AppDataBase.getInstance();
+                db.updateLauncherAppsSchema(Number(this.uid_), this.availableSchemas_);
             }
             catch(error) {
                 logger.error(`Launcher ${this.address_} getConfig ${error}`);
@@ -370,5 +398,10 @@ export class LauncherController {
             logger.error('Error fetching data:', error);
             throw error;
         }
+    }
+
+    public getStatus() {
+        const schemas = Array.from(this.availableSchemas_, ([key, value]) => ({ 'app': key, 'schema': value }));
+        return { address: this.address_, uid: this.uid_, connected: this.connected, config: this.config_, availableApps: this.availableApps_, availableSchemas: schemas };
     }
 }

@@ -18,7 +18,7 @@ export interface ILayout {
     id: number;
     uid: string;
     user: string;
-    launcher: string;
+    launcher: number;
     width: number;
     height: number;    
     components: IComponent[];
@@ -27,7 +27,7 @@ export interface ILayout {
 
 // LayoutScene
 export class LayoutScene {
-    private launcherUID: string = "";
+    private launcherUID: number = -1;
     private layout_: ILayout | null = null;
 
     public init(layout: ILayout) {

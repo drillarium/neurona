@@ -2,5 +2,7 @@
   "uid": "uid",
   "name": "name",
   "autostart": true,
-  "meme": false
+  "meme": false,
+  "url": "C:\\boxmedia\\capture_test.mp4",
+  "preview": true
 }

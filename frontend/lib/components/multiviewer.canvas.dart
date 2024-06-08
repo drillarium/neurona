@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:neurona/provider/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class MultiviewerCanvasComponent extends StatefulWidget {
   const MultiviewerCanvasComponent({super.key});
@@ -219,7 +221,13 @@ class _MultiviewerCanvasComponentState
         },
         child: CustomPaint(
           size: MediaQuery.of(context).size,
-          painter: RectanglePainter(rectangles, selectedIndex),
+          painter: RectanglePainter(
+            rectangles,
+            selectedIndex,
+            Provider.of<ThemeProvider>(context).isDarkMode
+                ? const Color.fromRGBO(43, 46, 56, 1)
+                : const Color.fromRGBO(219, 222, 213, 1),
+          ),
         ),
       );
     });
@@ -229,14 +237,14 @@ class _MultiviewerCanvasComponentState
 class RectanglePainter extends CustomPainter {
   final List<RectData> rectangles;
   final int selectedIndex;
+  final Color bkColor;
 
-  RectanglePainter(this.rectangles, this.selectedIndex);
+  RectanglePainter(this.rectangles, this.selectedIndex, this.bkColor);
 
   @override
   void paint(Canvas canvas, Size size) {
     // Paint the background in gray color
-    Paint backgroundPaint = Paint()
-      ..color = const Color.fromRGBO(43, 46, 56, 1);
+    Paint backgroundPaint = Paint()..color = bkColor;
     canvas.drawRect(
         Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
 

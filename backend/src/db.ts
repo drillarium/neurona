@@ -83,6 +83,13 @@ export class AppDataBase {
                         resolve();
                     }                    
                 });
+
+                // Create launchers schemas table if it does not exist
+                this.db.run(`CREATE TABLE IF NOT EXISTS launchers_apps_schema (
+                            id INTEGER PRIMARY KEY,
+                            schemas TEXT,
+                            FOREIGN KEY (id) REFERENCES launchers(id)
+                )`);
             });
         });   
     }
@@ -248,6 +255,37 @@ export class AppDataBase {
                     reject(err);
                 } else {
                     resolve();
+                }
+            });
+        });
+    }
+
+    // Functiom to update lauchher available apps and it's schema
+    public updateLauncherAppsSchema(launcherId: number, schemas: Map<string, any>) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            const obj = Object.fromEntries(schemas);
+            this.db.run('INSERT OR REPLACE INTO launchers_apps_schema (id, schemas) VALUES (?, ?)', [launcherId, JSON.stringify(obj)], (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    // Function the get launcher avaialble apps and theyr's schema
+    public launcherAppsSchema(launcherId: number) : Promise<Map<string, any>> {
+        return new Promise((resolve, reject) => {
+            this.db.get('SELECT * FROM launchers_apps_schema WHERE id = ?', [launcherId], (err, row : any) => {
+                if (err) {
+                    reject(err);
+                } else if (!row) {
+                    reject(new Error(`Launcher ${launcherId} not found`));
+                } else {
+                    const schemas = row.schemas;
+                    const obj = JSON.parse(schemas);
+                    resolve(new Map(Object.entries(obj)));
                 }
             });
         });

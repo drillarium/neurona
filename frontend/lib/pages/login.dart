@@ -29,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     _emailController.addListener(_updateLoginButtonState);
     _passwordController.addListener(_updateLoginButtonState);
     _errorTimer = Timer(const Duration(seconds: 5), () {
-      _clearError();
+      // _clearError();
     });
   }
 
@@ -267,7 +267,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Stack(
                         children: [
                           Image.asset(
-                            'images/background.jpg',
+                            'assets/images/background.jpg',
                             fit: BoxFit.cover,
                             width: double.infinity,
                             height: double.infinity,

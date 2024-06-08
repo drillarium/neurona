@@ -6,7 +6,7 @@ class AppConfig {
 
   static Future<void> loadConfig() async {
     try {
-      String jsonString = await rootBundle.loadString('config.json');
+      String jsonString = await rootBundle.loadString('assets/config.json');
       Map<String, dynamic> config = jsonDecode(jsonString);
       backendAddress = config['backendAddress'];
     } catch (e) {

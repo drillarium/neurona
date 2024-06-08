@@ -1,0 +1,33 @@
+{
+  "title": "User",
+  "description": "Test Schema for User",
+  "type": "object",
+  "required": [
+    "name",
+    "password",
+    "rol",
+    "description"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name",
+      "default": "Test name"
+    },
+    "password": {
+      "type": "string",
+      "title": "Password",
+      "default": "Test password"
+    },
+    "rol": {
+      "type": "string",
+      "title": "Rol",
+      "default": "Test rol"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "default": "Test description"
+    }
+  }
+}

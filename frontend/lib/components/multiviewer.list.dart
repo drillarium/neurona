@@ -56,7 +56,7 @@ class _MultiviewerListComponentState extends State<MultiviewerListComponent> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.add),
+                    icon: const Icon(Icons.settings),
                     color: Colors.white,
                     onPressed: () => widget.onAddItem(),
                   ),

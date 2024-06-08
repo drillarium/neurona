@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:neurona/components/multiviewer.canvas.dart';
 import 'package:neurona/components/multiviewer.list.dart';
+import 'package:neurona/dialogs/multiviewer.input.dart';
 import 'package:neurona/provider/theme_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -16,11 +17,48 @@ class MultiviewerPage extends StatefulWidget {
 }
 
 class _MultiviewerPageState extends State<MultiviewerPage> {
+  void _showManageInputsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return const Center(
+          child: MultiviewerInputDialog(),
+        );
+      },
+    );
+  }
+
+  Future<String?> _showRemoveConfirmationDialog() async {
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirm Remove'),
+          content: const Text('Are you sure you want to remove the item?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop('Cancel');
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop('Ok');
+              },
+              child: const Text('Ok'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(30.0),
+        preferredSize: const Size.fromHeight(40.0),
         child: AppBar(
           title: Text(
             'Multiviewer',
@@ -30,6 +68,13 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                   ? Colors.white
                   : Colors.black,
             ),
+          ),
+          leading: IconButton(
+            icon: Icon(Icons.play_arrow),
+            onPressed: () {
+              // Action to be performed when the button is pressed
+              print('Left button pressed');
+            },
           ),
         ),
       ),
@@ -62,9 +107,14 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                               .add('Scene ${widget._listScenes.length + 1}');
                           setState(() {});
                         },
-                        onRemoveItem: (int index) {
-                          widget._listScenes.removeAt(index);
-                          setState(() {});
+                        onRemoveItem: (int index) async {
+                          String? result =
+                              await _showRemoveConfirmationDialog();
+                          if (result == "Ok") {
+                            setState(() {
+                              widget._listScenes.removeAt(index);
+                            });
+                          }
                         },
                         onMoveDownItem: (int index) {
                           final String temp = widget._listScenes[index];
@@ -94,9 +144,11 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                         title: "Inputs",
                         itemList: widget._listInputs,
                         onAddItem: () {
-                          widget._listInputs
-                              .add('Input ${widget._listInputs.length + 1}');
-                          setState(() {});
+                          _showManageInputsDialog(context);
+
+                          // widget._listInputs
+                          //    .add('Input ${widget._listInputs.length + 1}');
+                          // setState(() {});
                         },
                         onRemoveItem: (int index) {
                           widget._listInputs.removeAt(index);

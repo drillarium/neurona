@@ -10,6 +10,7 @@ const int studioApp = 2;
 class AppSidebar extends StatelessWidget {
   final Function(int) onAppSelected;
   final Function() onLogout;
+  final Function()? onAdmin;
   final int selectedApp;
   final String username;
 
@@ -19,6 +20,7 @@ class AppSidebar extends StatelessWidget {
     required this.selectedApp,
     required this.onLogout,
     required this.username,
+    required this.onAdmin,
   });
 
   @override
@@ -30,7 +32,7 @@ class AppSidebar extends StatelessWidget {
           children: [
             IconButton(
               icon: SvgPicture.asset(
-                'images/multiviewer.svg',
+                'assets/images/multiviewer.svg',
                 width: 24,
                 height: 24,
                 colorFilter: ColorFilter.mode(
@@ -46,7 +48,7 @@ class AppSidebar extends StatelessWidget {
             ),
             IconButton(
               icon: SvgPicture.asset(
-                'images/videomixer.svg',
+                'assets/images/videomixer.svg',
                 width: 24,
                 height: 24,
                 colorFilter: ColorFilter.mode(
@@ -62,7 +64,7 @@ class AppSidebar extends StatelessWidget {
             ),
             IconButton(
               icon: SvgPicture.asset(
-                'images/studio.svg',
+                'assets/images/studio.svg',
                 width: 24,
                 height: 24,
                 colorFilter: ColorFilter.mode(
@@ -80,6 +82,11 @@ class AppSidebar extends StatelessWidget {
         ),
         Column(
           children: [
+            IconButton(
+              icon: const Icon(Icons.engineering),
+              onPressed: onAdmin,
+              tooltip: "Admin tools",
+            ),
             IconButton(
               icon: Consumer<ThemeProvider>(
                 builder: (context, themeProvider, child) {
@@ -103,7 +110,7 @@ class AppSidebar extends StatelessWidget {
               message: username,
               child: IconButton(
                 icon: const Icon(Icons.person),
-                onPressed: () => onLogout(),
+                onPressed: onLogout,
               ),
             ),
           ],

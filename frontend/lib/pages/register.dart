@@ -235,7 +235,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: Stack(
                         children: [
                           Image.asset(
-                            'images/background.jpg',
+                            'assets/images/background.jpg',
                             fit: BoxFit.cover,
                             width: double.infinity,
                             height: double.infinity,
