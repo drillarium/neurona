@@ -1,0 +1,42 @@
+{
+    "title": "Scene",
+    "description": "Multiviewer scene",
+    "type": "object",
+    "required": [
+    ],
+    "properties": {
+      "id": {
+        "type": "number",
+        "title": "Id",
+        "default": "-1",
+        "readOnly": true
+      },     
+      "name": {
+        "type": "string",
+        "title": "Name",
+        "default": "Scene name"
+      },
+      "user": {
+        "type": "string",
+        "title": "Creator",
+        "readOnly": true,
+        "default": ""
+      },
+      "launcher": {
+        "type": "string",
+        "title": "Host",
+        "enum": [""],
+        "default": "" 
+      },
+      "width": {
+        "type": "number",
+        "title": "Width",
+        "default": 1920
+      },
+      "height": {
+        "type": "number",
+        "title": "Height",
+        "default": 1080
+      }
+    }
+  }

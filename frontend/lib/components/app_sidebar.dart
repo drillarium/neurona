@@ -30,53 +30,62 @@ class AppSidebar extends StatelessWidget {
       children: [
         Column(
           children: [
-            IconButton(
-              icon: SvgPicture.asset(
-                'assets/images/multiviewer.svg',
-                width: 24,
-                height: 24,
-                colorFilter: ColorFilter.mode(
-                    selectedApp == multiviewerAPP
-                        ? Colors.blue
-                        : Provider.of<ThemeProvider>(context).isDarkMode
-                            ? Colors.white
-                            : Colors.black,
-                    BlendMode.srcIn),
+            Visibility(
+              visible: true,
+              child: IconButton(
+                icon: SvgPicture.asset(
+                  'assets/images/multiviewer.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(
+                      selectedApp == multiviewerAPP
+                          ? Colors.blue
+                          : Provider.of<ThemeProvider>(context).isDarkMode
+                              ? Colors.white
+                              : Colors.black,
+                      BlendMode.srcIn),
+                ),
+                tooltip: "Multiviewer",
+                onPressed: () => onAppSelected(multiviewerAPP),
               ),
-              tooltip: "Multiviewer",
-              onPressed: () => onAppSelected(multiviewerAPP),
             ),
-            IconButton(
-              icon: SvgPicture.asset(
-                'assets/images/videomixer.svg',
-                width: 24,
-                height: 24,
-                colorFilter: ColorFilter.mode(
-                    selectedApp == videoMixerAPP
-                        ? Colors.blue
-                        : Provider.of<ThemeProvider>(context).isDarkMode
-                            ? Colors.white
-                            : Colors.black,
-                    BlendMode.srcIn),
+            Visibility(
+              visible: false,
+              child: IconButton(
+                icon: SvgPicture.asset(
+                  'assets/images/videomixer.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(
+                      selectedApp == videoMixerAPP
+                          ? Colors.blue
+                          : Provider.of<ThemeProvider>(context).isDarkMode
+                              ? Colors.white
+                              : Colors.black,
+                      BlendMode.srcIn),
+                ),
+                tooltip: "Videomixer",
+                onPressed: () => onAppSelected(videoMixerAPP),
               ),
-              tooltip: "Videomixer",
-              onPressed: () => onAppSelected(videoMixerAPP),
             ),
-            IconButton(
-              icon: SvgPicture.asset(
-                'assets/images/studio.svg',
-                width: 24,
-                height: 24,
-                colorFilter: ColorFilter.mode(
-                    selectedApp == studioApp
-                        ? Colors.blue
-                        : Provider.of<ThemeProvider>(context).isDarkMode
-                            ? Colors.white
-                            : Colors.black,
-                    BlendMode.srcIn),
+            Visibility(
+              visible: false,
+              child: IconButton(
+                icon: SvgPicture.asset(
+                  'assets/images/studio.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(
+                      selectedApp == studioApp
+                          ? Colors.blue
+                          : Provider.of<ThemeProvider>(context).isDarkMode
+                              ? Colors.white
+                              : Colors.black,
+                      BlendMode.srcIn),
+                ),
+                tooltip: "Studio",
+                onPressed: () => onAppSelected(studioApp),
               ),
-              tooltip: "Studio",
-              onPressed: () => onAppSelected(studioApp),
             ),
           ],
         ),

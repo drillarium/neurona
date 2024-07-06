@@ -2,7 +2,7 @@ import * as sqlite3 from 'sqlite3';
 import { User } from './users/user.model';
 import { Launcher } from './launcher/launcher.model';
 import { logger } from './logger';
-import { ILayout } from './multiviewer/layout.scene';
+import { IScene } from './multiviewer/scene';
 
 // database
 export class AppDataBase {
@@ -23,7 +23,7 @@ export class AppDataBase {
                             username TEXT NOT NULL UNIQUE,
                             email TEXT NOT NULL UNIQUE,
                             password TEXT,
-                            isAdmin BOOLEAN
+                            isAdmin INTEGER
                 )`);
 
                 // Add admin user if not already exists
@@ -114,13 +114,14 @@ export class AppDataBase {
         });
     }
 
-    public async saveUser(user: User): Promise<void> {
+    public async saveUser(user: User): Promise<User> {
         return new Promise((resolve, reject) => {
-            this.db.run('INSERT INTO users (username, email, password, isAdmin) VALUES (?, ?, ?, false)', [user.username, user.email, user.password], (err) => {
+            this.db.run('INSERT INTO users (username, email, password, isAdmin) VALUES (?, ?, ?, ?)', [user.username, user.email, user.password, user.isAdmin], function (err) {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve();
+                    user.id = this.lastID;
+                    resolve(user);
                 }
             });
         });
@@ -235,9 +236,22 @@ export class AppDataBase {
     }
 
     // Function to create a new launcher
-    public addLauncher(address: string) : Promise<void> {
+    public addLauncher(launcher: Launcher) : Promise<Launcher> {
         return new Promise((resolve, reject) => {
-            this.db.run('INSERT INTO launchers (address) VALUES (?)', [address], (err) => {
+            this.db.run('INSERT INTO launchers (address) VALUES (?)', [launcher.address], function (err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    launcher.id = this.lastID;
+                    resolve(launcher);
+                }
+            });
+        });
+    }
+
+    public async updateLauncher(launcher: Launcher): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.db.run('UPDATE launchers SET address = ? WHERE id = ?', [launcher.address, launcher.id], (err) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -292,13 +306,13 @@ export class AppDataBase {
     }
 
     // load scenes
-    public async loadScenes(): Promise<ILayout[]> {
+    public async loadScenes(): Promise<IScene[]> {
         return new Promise((resolve, reject) => {
             this.db.all('SELECT * FROM scenes', (err, rows: any[]) => {
                 if (err) {
                     reject(err);
                 } else {
-                    const scenes: ILayout[] = rows.map(row => { return { ... JSON.parse(row.scene), id: row.id }; });
+                    const scenes: IScene[] = rows.map(row => { return { ... JSON.parse(row.scene), id: row.id }; });
                     resolve(scenes);
                 }
             });
@@ -306,7 +320,7 @@ export class AppDataBase {
     }    
 
     // Function to save a scene
-    public saveScene(scene: ILayout) : Promise<number> {
+    public saveScene(scene: IScene) : Promise<number> {
         return new Promise((resolve, reject) => {
             this.db.run('INSERT INTO scenes (scene) VALUES (?)', [JSON.stringify(scene)], function (err) {
                 if (err) {
@@ -318,7 +332,7 @@ export class AppDataBase {
         });
     }
 
-    public async updateScene(scene: ILayout): Promise<void> {
+    public async updateScene(scene: IScene): Promise<void> {
         return new Promise((resolve, reject) => {
             this.db.run('UPDATE scenes SET scene = ? WHERE id = ?', [JSON.stringify(scene), scene.id], (err) => {
                 if (err) {

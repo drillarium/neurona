@@ -51,8 +51,8 @@ userRouter.get("/:emailorname", async(req: Request, res: Response) => {
 userRouter.post("/", async(req: Request, res: Response) => {
   const newUser = req.body;
   try {
-    await db.saveUser(newUser);
-    res.status(200).send();
+    const user = await db.saveUser(newUser);
+    res.status(201).send(user);
   }
   catch(error: any) {
     logger.error(`POST "/" ${JSON.stringify(error)}`);
@@ -84,8 +84,9 @@ userRouter.post("/validate", async(req: Request, res: Response) => {
 });
 
 // PUT user
-userRouter.put("/", async(req: Request, res: Response) => {
-  const user = req.body;
+userRouter.put("/:id", async(req: Request, res: Response) => {
+  var user = req.body;
+  user.id = parseInt(req?.params?.id);
   try {
     await db.updateUser(user);
     res.status(200).send();

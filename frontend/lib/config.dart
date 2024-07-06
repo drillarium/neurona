@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class AppConfig {
@@ -10,7 +11,9 @@ class AppConfig {
       Map<String, dynamic> config = jsonDecode(jsonString);
       backendAddress = config['backendAddress'];
     } catch (e) {
-      print('Error loading config file: $e');
+      if (kDebugMode) {
+        print('Error loading config file: $e');
+      }
     }
   }
 }

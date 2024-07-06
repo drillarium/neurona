@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:neurona/common/checkbox_form_field.dart';
 import 'package:neurona/models/properties.dart';
 import 'package:neurona/models/schema.dart';
@@ -9,9 +12,13 @@ import 'package:provider/provider.dart';
 class JsonSchemaForm extends StatefulWidget {
   final Schema schema;
   final JsonSchemaBloc jsonSchemaBloc;
+  final Function(Map<String, dynamic>) onSubmit;
 
   const JsonSchemaForm(
-      {super.key, required this.schema, required this.jsonSchemaBloc});
+      {super.key,
+      required this.schema,
+      required this.jsonSchemaBloc,
+      required this.onSubmit});
 
   @override
   State<StatefulWidget> createState() => _jsonSchemaForm();
@@ -22,6 +29,25 @@ typedef JsonSchemaFormSetter<T> = void Function(T newValue);
 // ignore: camel_case_types
 class _jsonSchemaForm extends State<JsonSchemaForm> {
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // added for accessing model
+    StreamSubscription<String>? subscription;
+    subscription = widget.jsonSchemaBloc.submitData.listen(
+      (value) {
+        widget.onSubmit(jsonDecode(value));
+      },
+      onDone: () {
+        subscription?.cancel();
+      },
+      onError: (error) {
+        subscription?.cancel();
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +116,7 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
                       backgroundColor: Colors.white,
                       fixedSize: const Size(100, 20),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(1),
                       ),
                     ),
                     child: const Text(
@@ -102,15 +128,6 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
               ),
             ),
           ),
-          StreamBuilder(
-              stream: widget.jsonSchemaBloc.submitData,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Text(snapshot.data!);
-                } else {
-                  return Container();
-                }
-              }),
         ],
       ),
     );
@@ -120,11 +137,15 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
     switch (properties.type) {
       case 'number':
       case 'string':
-        return getTextField(properties);
+        if (properties.enumValues.isEmpty) {
+          return getTextField(properties);
+        } else {
+          return getDropdownSelector(properties);
+        }
       case 'boolean':
         return getCheckBox(properties);
-      case 'enum':
-        return getDropdownSelector(properties);
+      // case 'enum':
+      // return getDropdownSelector(properties);
       default:
         return Container();
     }
@@ -145,9 +166,15 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
       child: TextFormField(
         readOnly: properties.readOnly,
         onSaved: (value) {
-          Map<String, dynamic> data = <String, dynamic>{};
-          data[properties.id] = value;
-          widget.jsonSchemaBloc.jsonDataAdd.add(data);
+          if (properties.type == "number") {
+            Map<String, dynamic> data = <String, dynamic>{};
+            data[properties.id] = int.parse(value!);
+            widget.jsonSchemaBloc.jsonDataAdd.add(data);
+          } else {
+            Map<String, dynamic> data = <String, dynamic>{};
+            data[properties.id] = value;
+            widget.jsonSchemaBloc.jsonDataAdd.add(data);
+          }
         },
         obscureText:
             properties.title.toLowerCase().contains("password") ? true : false,
@@ -168,11 +195,15 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
           border: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.transparent),
           ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white, width: 1.0),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Provider.of<ThemeProvider>(context).isDarkMode
+                    ? Colors.white
+                    : Colors.black,
+                width: 1.0),
           ),
         ),
-        style: const TextStyle(color: Colors.white, fontSize: 12.0),
+        style: const TextStyle(color: Colors.grey, fontSize: 12.0),
       ),
     );
   }
@@ -211,9 +242,7 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
       margin: const EdgeInsets.only(bottom: 15.0),
       padding: const EdgeInsets.only(left: 10.0, right: 10.0, bottom: 10.0),
       decoration: BoxDecoration(
-        color: Provider.of<ThemeProvider>(context).isDarkMode
-            ? const Color.fromARGB(255, 35, 51, 72)
-            : const Color.fromARGB(255, 136, 170, 209),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(15),
       ),
       child: StreamBuilder(
@@ -223,15 +252,17 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
             return DropdownButtonFormField<String>(
               // Specify type argument as String
               dropdownColor: Provider.of<ThemeProvider>(context).isDarkMode
-                  ? const Color.fromARGB(255, 61, 88, 123)
-                  : const Color.fromARGB(255, 81, 136, 199),
+                  ? Colors.black
+                  : Colors.white,
               autovalidateMode: AutovalidateMode.always,
               value: snapshot.data,
               items: properties.enumValues
                   .map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
-                  child: Text(value),
+                  child: Text(value,
+                      style:
+                          const TextStyle(color: Colors.grey, fontSize: 12.0)),
                 );
               }).toList(),
               onChanged: (String? value) {
@@ -244,6 +275,10 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
                 labelText: properties.required
                     ? '${properties.title} *'
                     : properties.title,
+                labelStyle: const TextStyle(color: Colors.grey, fontSize: 12.0),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey, width: 2.0),
+                ),
               ),
             );
           } else {

@@ -50,6 +50,7 @@ app.use(express.json());
 app.use(cors());
 
 // router
+app.get('/api/v1', (req, res) => { res.json(config); });
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/multiviewer", multiviewerRouter);
 app.use("/api/v1/launchers", launcherRouter);

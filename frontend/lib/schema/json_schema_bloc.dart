@@ -45,6 +45,21 @@ class JsonSchemaBloc {
       schema.model = jsonModel;
       _jsonSchema.add(schema);
     } else {
+      jsonMap["title"] = "New ${jsonMap['title']}";
+      _jsonSchema.add(Schema.fromJson(jsonMap));
+    }
+  }
+
+  void getSchema2(Map<String, dynamic> schema_, String jsonModel) {
+    _data.clear();
+    Map<String, dynamic> jsonMap = Map.from(schema_);
+    Schema schema;
+    if (jsonModel != '') {
+      schema = Schema.fromJson(jsonMap);
+      schema.model = jsonModel;
+      _jsonSchema.add(schema);
+    } else {
+      jsonMap["title"] = "New ${jsonMap['title']}";
       _jsonSchema.add(Schema.fromJson(jsonMap));
     }
   }
@@ -59,7 +74,7 @@ class JsonSchemaBloc {
       if (jsonData.containsKey(prop.id)) {
         prop.defaultValue = jsonData[prop.id];
       }
-      if (prop.type == 'enum') {
+      if (prop.type == 'string' && prop.enumValues.isNotEmpty) {
         _data[prop.id] = prop.defaultValue;
       }
       _formData[prop.id] = BehaviorSubject<dynamic>();

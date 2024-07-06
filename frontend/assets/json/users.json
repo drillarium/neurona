@@ -1,33 +1,39 @@
 {
   "title": "User",
-  "description": "Test Schema for User",
+  "description": "",
   "type": "object",
   "required": [
-    "name",
+    "username",
+    "email",
     "password",
-    "rol",
-    "description"
+    "isAdmin"
   ],
   "properties": {
-    "name": {
+    "id": {
+      "type": "number",
+      "title": "Id",
+      "default": "-1",
+      "readOnly": true
+    },
+    "username": {
       "type": "string",
-      "title": "Name",
-      "default": "Test name"
+      "title": "User",
+      "default": ""
+    },
+    "email": {
+      "type": "string",
+      "title": "Email",
+      "default": ""
     },
     "password": {
       "type": "string",
       "title": "Password",
-      "default": "Test password"
+      "default": ""
     },
-    "rol": {
-      "type": "string",
-      "title": "Rol",
-      "default": "Test rol"
-    },
-    "description": {
-      "type": "string",
-      "title": "Description",
-      "default": "Test description"
+    "isAdmin": {
+      "type": "number",
+      "title": "IsAdmin",
+      "default": "0"
     }
   }
 }

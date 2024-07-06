@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:neurona/pages/home.dart';
 import 'package:neurona/pages/register.dart';
 import 'package:neurona/services/language.service.dart';
+import 'package:neurona/services/ws.service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
@@ -21,6 +22,9 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoginButtonEnabled = false;
   bool _isErrorVisible = true;
   Timer? _errorTimer;
+  final WebSocketClient? _webSocketClient = WebSocketClient.instance;
+  String _statusMessage = "";
+  late StreamSubscription<ConnectionStatus> _status;
 
   @override
   void initState() {
@@ -28,8 +32,17 @@ class _LoginPageState extends State<LoginPage> {
     _loadRememberMe();
     _emailController.addListener(_updateLoginButtonState);
     _passwordController.addListener(_updateLoginButtonState);
+    // error timer
     _errorTimer = Timer(const Duration(seconds: 5), () {
-      // _clearError();
+      _clearError();
+    });
+    // connection to server status
+    _statusMessage =
+        WebSocketClient.connectionStatusToText(_webSocketClient!.lastStatus);
+    _status = _webSocketClient.status.listen((status) {
+      setState(() {
+        _statusMessage = WebSocketClient.connectionStatusToText(status);
+      });
     });
   }
 
@@ -38,6 +51,7 @@ class _LoginPageState extends State<LoginPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _errorTimer?.cancel();
+    _status.cancel();
     super.dispose();
   }
 
@@ -105,6 +119,19 @@ class _LoginPageState extends State<LoginPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Center(
+          child: Image.asset(
+            'assets/images/icon-1024x1024.png',
+            fit: BoxFit.fill,
+            width: 240,
+            height: 240,
+          ),
+        ),
+        const SizedBox(height: 15),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text(_statusMessage,
+              style: const TextStyle(color: Colors.black, fontSize: 12.0)),
+        ]),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -117,10 +144,10 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 15),
         _buildTextFormField(
             _emailController, 'Email or username', Icons.email, false),
-        const SizedBox(height: 20),
+        const SizedBox(height: 15),
         _buildTextFormField(
             _passwordController, 'Password', Icons.password, true),
         const SizedBox(height: 5),

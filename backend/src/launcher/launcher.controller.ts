@@ -1,6 +1,7 @@
 import { AppDataBase } from "../db";
 import { logger } from "../logger";
 import { WebSocket } from 'ws';
+import { broadcast } from "../services/ws.service";
 
 // TODO: Move to a common place used by Launcher and Backend
 export interface AppInfo {
@@ -39,6 +40,7 @@ export class LauncherController {
     }
 
     public get connected() { return this.connected_; }
+    public get uid() { return this.uid_; }
 
     // init
     public init(launcherUID: number, appUID: string, sessionUID: string, address: string) {
@@ -88,6 +90,10 @@ export class LauncherController {
 
             // connected
             this.connected_ = true;
+
+            // notify
+            const message = { message: "launcher_status_change", "uid": this.uid_, "connected": true, status: this.getStatus() };
+            broadcast(message);
         });
 
         // close
@@ -97,6 +103,10 @@ export class LauncherController {
 
                 // connected
                 this.connected_ = false;
+
+                // notify
+                const message = { message: "launcher_status_change", "uid": this.uid_, "connected": false, status: null };
+                broadcast(message);
             }
 
             // reconnection
@@ -132,6 +142,10 @@ export class LauncherController {
 
         // connected
         this.connected_ = false;
+
+        // notify
+        const message = { message: "launcher_status_change", "uid": this.uid_, "connected": false, status: null };
+        broadcast(message);
     }
 
     // getCongig

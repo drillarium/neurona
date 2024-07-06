@@ -44,9 +44,51 @@ export class LauncherApp {
 
     // status
     public status(launcherID: number) {
-        if(!this.launchers.has(launcherID)) {
+        if(!this.launchers.has(launcherID)) {        
             throw Error("");
         }
         return this.launchers.get(launcherID)?.getStatus();
+    }
+
+    public name(launcherID: number) {
+        if(!this.launchers.has(launcherID)) {        
+            throw Error("");
+        }
+        const status = this.launchers.get(launcherID)?.getStatus();
+        if(status?.connected) {
+            return status.config.name;
+        }
+        else {
+            return status?.address;
+        }
+    }
+
+    public idByName(name: string) {
+        for (let [key, value] of this.launchers) {
+            const status = value.getStatus();
+            if(status.connected) {
+                if(status.config.name == name) {
+                    return value.uid;
+                }
+            }
+            else {
+                if(status.address == name) {
+                    return value.uid;
+                }
+            }
+        }
+        return -1;
+    }
+
+    // running launchers
+    public launchersStatus() {
+        var ret: any[] = [];
+
+        this.launchers.forEach((launcher) => {
+            const status = launcher.getStatus();
+            ret.push(status);          
+        });
+
+        return ret;
     }
 }

@@ -1,0 +1,45 @@
+{
+  "title": "Server",
+  "description": "Server configuration (read only)",
+  "type": "object",
+  "required": [
+    "address"
+  ],
+  "properties": {
+    "uid": {
+      "type": "string",
+      "title": "UID",
+      "readOnly": true
+    },
+    "port": {
+      "type": "number",
+      "title": "Port",
+      "readOnly": true
+    },
+    "name": {
+      "type": "string",
+      "title": "Name",
+      "readOnly": true
+    },
+    "interface": {
+      "type": "string",
+      "title": "Interface",
+      "readOnly": true
+    },
+    "publicFolder": {
+      "type": "string",
+      "title": "Public folder",
+      "readOnly": true
+    },
+    "logs": {
+      "type": "string",
+      "title": "Logs",
+      "readOnly": true
+    },
+    "db": {
+      "type": "string",
+      "title": "DB name",
+      "readOnly": true
+    }
+  }
+}

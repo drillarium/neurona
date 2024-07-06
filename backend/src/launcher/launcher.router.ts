@@ -32,13 +32,27 @@ launcherRouter.get("/", async(req: Request, res: Response) => {
 
 // POST launcher
 launcherRouter.post("/", async(req: Request, res: Response) => {
-  const address = req.body;
+  const newLauncher = req.body;
   try {
-    await db.addLauncher(address.address);
+    const launcher = await db.addLauncher(newLauncher);
+    res.status(201).send(launcher);
+  }
+  catch(error: any) {
+    logger.error(`POST "/" ${JSON.stringify(error)}`);
+    res.status(400).send(error.message);
+  }
+});
+
+// PUT launcher
+launcherRouter.put("/:id", async(req: Request, res: Response) => {
+  var launcher = req.body;
+  launcher.id = req?.params?.id;
+  try {
+    await db.updateLauncher(launcher);
     res.status(200).send();
   }
   catch(error: any) {
-    logger.error(`POST "/" ${address} ${JSON.stringify(error)}`);
+    logger.error(`PUT "/:id" ${JSON.stringify(error)}`);
     res.status(400).send(error.message);
   }
 });

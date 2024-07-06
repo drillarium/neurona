@@ -1,31 +1,87 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:neurona/components/multiviewer.canvas.dart';
 import 'package:neurona/components/multiviewer.list.dart';
-import 'package:neurona/dialogs/multiviewer.input.dart';
+import 'package:neurona/dialogs/multiviewer.admin.dart';
+import 'package:neurona/models/multiviewer.scene.dart';
 import 'package:neurona/provider/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:neurona/services/multiviewer.service.dart';
+import 'package:neurona/services/ws.service.dart';
 
 class MultiviewerPage extends StatefulWidget {
-  final List<String> _listScenes = ['Scene 1', 'Scene 2', 'Scene 3'];
-  final List<String> _listInputs = ['Input 1', 'Input 2', 'Input 3'];
-  final List<String> _listOutputs = ['Output 1', 'Output 2', 'Output 3'];
-
-  MultiviewerPage({super.key});
+  const MultiviewerPage({super.key});
 
   @override
   State<MultiviewerPage> createState() => _MultiviewerPageState();
 }
 
 class _MultiviewerPageState extends State<MultiviewerPage> {
-  void _showManageInputsDialog(BuildContext context) {
+  List<MultiviewerScene> _listScenes = [];
+  final WebSocketClient? _webSocketClient = WebSocketClient.instance;
+  late StreamSubscription<String> _wsMessage;
+  int _sceneIndex = -1;
+
+  void _showManageInputsDialog(BuildContext context, EngineType engineType) {
+    int sceneId = _sceneIndex >= 0 ? _listScenes[_sceneIndex].id : -1;
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return const Center(
-          child: MultiviewerInputDialog(),
+        return Center(
+          child:
+              MultiviewerAdminDialog(engineType: engineType, sceneId: sceneId),
         );
       },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchScenes();
+    // connection to server status
+    _wsMessage = _webSocketClient!.messages.listen((message) {
+      Map<String, dynamic> backendMessage = jsonDecode(message);
+      if (backendMessage["message"] == "scene_list_change") {
+        setState(() {
+          fetchScenes();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsMessage.cancel();
+    super.dispose();
+  }
+
+  fetchScenes() {
+    setState(() {
+      MultiviewerService.instance!.fetchScenes().then((response) {
+        setState(() {
+          _listScenes = response;
+          if (_sceneIndex >= _listScenes.length) {
+            _sceneIndex = -1;
+          }
+        });
+      }).catchError((error) {
+        setState(() {
+          _listScenes = [];
+          if (_sceneIndex >= _listScenes.length) {
+            _sceneIndex = -1;
+          }
+        });
+      });
+    });
+  }
+
+  onSceneIndexChange(int index) {
+    setState(() {
+      _sceneIndex = index;
+    });
   }
 
   Future<String?> _showRemoveConfirmationDialog() async {
@@ -54,6 +110,18 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
     );
   }
 
+  // input list
+  List<MultiviewerInput> inputList(int index) {
+    if ((index < 0) || (index >= _listScenes.length)) return [];
+    return _listScenes[index].inputs;
+  }
+
+  // output list
+  List<MultiviewerOutput> outputList(int index) {
+    if ((index < 0) || (index >= _listScenes.length)) return [];
+    return _listScenes[index].outputs;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,11 +138,8 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
             ),
           ),
           leading: IconButton(
-            icon: Icon(Icons.play_arrow),
-            onPressed: () {
-              // Action to be performed when the button is pressed
-              print('Left button pressed');
-            },
+            icon: const Icon(Icons.play_arrow),
+            onPressed: () {},
           ),
         ),
       ),
@@ -100,37 +165,34 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                           ? const Color.fromRGBO(43, 46, 56, 1)
                           : const Color.fromRGBO(219, 222, 213, 1),
                       child: MultiviewerListComponent(
-                        title: "Scenes",
-                        itemList: widget._listScenes,
-                        onAddItem: () {
-                          widget._listScenes
-                              .add('Scene ${widget._listScenes.length + 1}');
-                          setState(() {});
-                        },
-                        onRemoveItem: (int index) async {
-                          String? result =
-                              await _showRemoveConfirmationDialog();
-                          if (result == "Ok") {
-                            setState(() {
-                              widget._listScenes.removeAt(index);
-                            });
-                          }
-                        },
-                        onMoveDownItem: (int index) {
-                          final String temp = widget._listScenes[index];
-                          widget._listScenes[index] =
-                              widget._listScenes[index + 1];
-                          widget._listScenes[index + 1] = temp;
-                          setState(() {});
-                        },
-                        onMoveUpItem: (int index) {
-                          final String temp = widget._listScenes[index];
-                          widget._listScenes[index] =
-                              widget._listScenes[index - 1];
-                          widget._listScenes[index - 1] = temp;
-                          setState(() {});
-                        },
-                      ),
+                          title: "Scenes",
+                          itemList:
+                              _listScenes.map((item) => item.name).toList(),
+                          onAddItem: () {
+                            _showManageInputsDialog(context, EngineType.scene);
+                          },
+                          onRemoveItem: (int index) async {
+                            String? result =
+                                await _showRemoveConfirmationDialog();
+                            if (result == "Ok") {
+                              setState(() {});
+                            }
+                          },
+                          onMoveDownItem: (int index) {
+                            var temp = _listScenes[index];
+                            _listScenes[index] = _listScenes[index + 1];
+                            _listScenes[index + 1] = temp;
+                            setState(() {});
+                          },
+                          onMoveUpItem: (int index) {
+                            var temp = _listScenes[index];
+                            _listScenes[index] = _listScenes[index - 1];
+                            _listScenes[index - 1] = temp;
+                            setState(() {});
+                          },
+                          onSelectedItemChange: (int index) {
+                            onSceneIndexChange(index);
+                          }),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -141,34 +203,39 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                           ? const Color.fromRGBO(43, 46, 56, 1)
                           : const Color.fromRGBO(219, 222, 213, 1),
                       child: MultiviewerListComponent(
-                        title: "Inputs",
-                        itemList: widget._listInputs,
-                        onAddItem: () {
-                          _showManageInputsDialog(context);
+                          title: "Inputs",
+                          itemList: inputList(_sceneIndex)
+                              .map((item) => item.name)
+                              .toList(),
+                          onAddItem: _sceneIndex < 0
+                              ? null
+                              : () {
+                                  _showManageInputsDialog(
+                                      context, EngineType.input);
 
-                          // widget._listInputs
-                          //    .add('Input ${widget._listInputs.length + 1}');
-                          // setState(() {});
-                        },
-                        onRemoveItem: (int index) {
-                          widget._listInputs.removeAt(index);
-                          setState(() {});
-                        },
-                        onMoveDownItem: (int index) {
-                          final String temp = widget._listInputs[index];
-                          widget._listInputs[index] =
-                              widget._listInputs[index + 1];
-                          widget._listInputs[index + 1] = temp;
-                          setState(() {});
-                        },
-                        onMoveUpItem: (int index) {
-                          final String temp = widget._listInputs[index];
-                          widget._listInputs[index] =
-                              widget._listInputs[index - 1];
-                          widget._listInputs[index - 1] = temp;
-                          setState(() {});
-                        },
-                      ),
+                                  // widget._listInputs
+                                  //    .add('Input ${widget._listInputs.length + 1}');
+                                  // setState(() {});
+                                },
+                          onRemoveItem: (int index) {
+                            // widget._listInputs.removeAt(index);
+                            setState(() {});
+                          },
+                          onMoveDownItem: (int index) {
+                            /* final String temp = widget._listInputs[index];
+                            widget._listInputs[index] =
+                                widget._listInputs[index + 1];
+                            widget._listInputs[index + 1] = temp; */
+                            setState(() {});
+                          },
+                          onMoveUpItem: (int index) {
+                            /* final String temp = widget._listInputs[index];
+                            widget._listInputs[index] =
+                                widget._listInputs[index - 1];
+                            widget._listInputs[index - 1] = temp; */
+                            setState(() {});
+                          },
+                          onSelectedItemChange: (int index) {}),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -179,32 +246,39 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                           ? const Color.fromRGBO(43, 46, 56, 1)
                           : const Color.fromRGBO(219, 222, 213, 1),
                       child: MultiviewerListComponent(
-                        title: "Outputs",
-                        itemList: widget._listOutputs,
-                        onAddItem: () {
-                          widget._listOutputs
+                          title: "Outputs",
+                          itemList: outputList(_sceneIndex)
+                              .map((item) => item.name)
+                              .toList(),
+                          onAddItem: _sceneIndex < 0
+                              ? null
+                              : () {
+                                  _showManageInputsDialog(
+                                      context, EngineType.output);
+
+                                  /* widget._listOutputs
                               .add('Output ${widget._listOutputs.length + 1}');
-                          setState(() {});
-                        },
-                        onRemoveItem: (int index) {
-                          widget._listOutputs.removeAt(index);
-                          setState(() {});
-                        },
-                        onMoveDownItem: (int index) {
-                          final String temp = widget._listOutputs[index];
-                          widget._listOutputs[index] =
-                              widget._listOutputs[index + 1];
-                          widget._listOutputs[index + 1] = temp;
-                          setState(() {});
-                        },
-                        onMoveUpItem: (int index) {
-                          final String temp = widget._listOutputs[index];
-                          widget._listOutputs[index] =
-                              widget._listOutputs[index - 1];
-                          widget._listOutputs[index - 1] = temp;
-                          setState(() {});
-                        },
-                      ),
+                          setState(() {}); */
+                                },
+                          onRemoveItem: (int index) {
+                            // widget._listOutputs.removeAt(index);
+                            setState(() {});
+                          },
+                          onMoveDownItem: (int index) {
+                            /* final String temp = widget._listOutputs[index];
+                            widget._listOutputs[index] =
+                                widget._listOutputs[index + 1];
+                            widget._listOutputs[index + 1] = temp; */
+                            setState(() {});
+                          },
+                          onMoveUpItem: (int index) {
+                            /* final String temp = widget._listOutputs[index];
+                            widget._listOutputs[index] =
+                                widget._listOutputs[index - 1];
+                            widget._listOutputs[index - 1] = temp; */
+                            setState(() {});
+                          },
+                          onSelectedItemChange: (int index) {}),
                     ),
                   ),
                 ],

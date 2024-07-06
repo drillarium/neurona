@@ -261,17 +261,17 @@ class RectanglePainter extends CustomPainter {
     // dimensions
     TextPainter hpainter = TextPainter(
       text: TextSpan(
-        text: '${screenSize.width.toInt()}x${screenSize.height.toInt()}',
+        text: 'Size: ${screenSize.width.toInt()}x${screenSize.height.toInt()}',
         style: const TextStyle(
           color: Colors.green,
-          fontSize: 10.0,
+          fontSize: 14.0,
         ),
       ),
       textDirection: TextDirection.ltr,
     );
 
     hpainter.layout();
-    hpainter.paint(canvas, Offset(ltwh.l + 5, ltwh.t + 5));
+    hpainter.paint(canvas, Offset(5, ltwh.t + 5));
 
     Paint borderPaint = Paint()
       ..color = Colors.green

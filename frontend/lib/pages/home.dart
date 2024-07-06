@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:neurona/components/app_sidebar.dart';
 import 'package:neurona/dialogs/admin.dart';
+import 'package:neurona/models/users.dart';
 import 'package:neurona/pages/login.dart';
 import 'package:neurona/pages/multiviewer.dart';
 import 'package:neurona/provider/theme_provider.dart';
@@ -21,8 +22,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedApp = multiviewerAPP;
   bool isSignedIn = false;
-  String username = "";
-  bool isAdmin = false;
+  User? user;
 
   Widget _getCenterApp() {
     switch (_selectedApp) {
@@ -39,15 +39,20 @@ class _HomePageState extends State<HomePage> {
 
   getUserData() async {
     ApiService.instance?.getUser(widget.emailorname).then((response) {
-      if (response != null) {
-        setState(() {
-          if (response.containsKey('username')) {
-            username = response['username'];
-            isAdmin = (response['isAdmin'] == 1);
-          }
-          isSignedIn = true;
-        });
-      }
+      setState(() {
+        user = response;
+        isSignedIn = true;
+        ApiService.instance?.user = user!;
+      });
+    }).catchError((error) {
+      // Navigate back to the login page
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                const LoginPage(error: "Critical error fetching user data")),
+        (Route<dynamic> route) => false,
+      );
     });
   }
 
@@ -123,7 +128,7 @@ class _HomePageState extends State<HomePage> {
                     ? Colors.black
                     : Colors.white,
                 child: AppSidebar(
-                  username: username,
+                  username: user != null ? user!.username : "",
                   selectedApp: _selectedApp,
                   onAppSelected: (index) {
                     setState(() {
@@ -162,7 +167,7 @@ class _HomePageState extends State<HomePage> {
                       },
                     );
                   },
-                  onAdmin: isAdmin
+                  onAdmin: user != null && user!.isAdmin == 1
                       ? () {
                           _showAdminDialog(context);
                         }

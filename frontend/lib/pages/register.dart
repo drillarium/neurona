@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:neurona/models/users.dart';
 import 'package:neurona/pages/home.dart';
 import 'package:neurona/pages/login.dart';
 import 'package:neurona/services/api.service.dart';
@@ -117,26 +118,21 @@ class _RegisterPageState extends State<RegisterPage> {
               ? null
               : () {
                   // save new user
-                  ApiService.instance
-                      ?.registerUser(_nameController.text,
-                          _emailController.text, _passwordController.text)
-                      .then(
+                  User newUser = User.fromData(_nameController.text,
+                      _emailController.text, _passwordController.text);
+
+                  ApiService.instance?.createUser(newUser).then(
                     (response) {
-                      if (!response) {
-                        setError("Error registering user");
-                      } else {
-                        // navigate to home
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => HomePage(
-                              emailorname: _emailController.text,
-                              password: _passwordController.text,
-                            ),
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HomePage(
+                            emailorname: _emailController.text,
+                            password: _passwordController.text,
                           ),
-                          (Route<dynamic> route) => false,
-                        );
-                      }
+                        ),
+                        (Route<dynamic> route) => false,
+                      );
                     },
                   ).catchError((error) {
                     setError(error.toString());
