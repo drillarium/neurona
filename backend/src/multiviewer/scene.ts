@@ -52,35 +52,31 @@ export class LayoutScene {
         this.scene_?.inputs.push(input);
     }
 
-    public updateInput(input: IInput) {
-        const index = this.scene_?.inputs.findIndex(i => i.id === input.id);
-        if(index! >= 0) {
-            this.scene_!.inputs[index!] = input;
-        }
+    public updateInput(inputIndex: number, input: IInput) {
+        this.scene_!.inputs[inputIndex!] = input;
     }
 
-    public removeInput(inputId: number) {
-        const index = this.scene_?.inputs.findIndex(i => i.id === inputId);
-        if(index! >= 0) {
-            this.scene_?.inputs.splice(index!, 1);
-        }
+    public removeInput(inputIndex: number) {
+        this.scene_?.inputs.splice(inputIndex!, 1);       
     }
 
     public addOutput(output: IOutput) {
         this.scene_?.outputs.push(output);
     }
 
-    public updateOutput(output: IOutput) {
-        const index = this.scene_?.outputs.findIndex(o => o.id === output.id);
-        if(index! >= 0) {
-            this.scene_!.outputs[index!] = output;
-        }
+    public updateOutput(outputIndex: number, output: IOutput) {      
+        this.scene_!.outputs[outputIndex!] = output;    
     }
 
-    public removeOutput(outputId: number) {
-        const index = this.scene_?.outputs.findIndex(o => o.id === outputId);
-        if(index! >= 0) {
-            this.scene_?.outputs.splice(index!, 1);
-        }
+    public removeOutput(outputIndex: number) {        
+        this.scene_?.outputs.splice(outputIndex!, 1);
     }    
+
+    public numInputs() : number {
+        return this.scene_? this.scene_.inputs.length : 0;
+    }
+
+    public numOutputs() : number {
+        return this.scene_? this.scene_.outputs.length : 0;
+    }
 }

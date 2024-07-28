@@ -646,7 +646,7 @@ void SDLMixerEngine::workerThreadFunc(int _index)
       smc.deinit();
 
       // open 
-      smc.init(_index % 2? "CEF_INPUT" : "FFMPEG_INPUT");
+      smc.init(_index % 2? "CEF_INPUT" : "FFMPEG_INPUT", 5000);
 
       // configured
       configureProducer_[_index] = false;

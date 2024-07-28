@@ -15,8 +15,9 @@ using namespace std::chrono_literals;
 
 const char APP_VERSION_STR[] = "0.0.1";
 
-const char UID[] = "uid";
+const char UID[] = "id";
 const char NAME[] = "name";
+const char TYPE[] = "type";
 const char AUTOSTART[] = "autostart";
 const char PREVIEW[] = "preview";
 const char WIDTH[] = "width";
@@ -35,14 +36,27 @@ std::string getJsonSchema()
 
   writer.StartObject();  // {
 
+  // 
+  writer.Key("BlackMagic (SDI)");
+  writer.StartObject(); // {
+
+  writer.Key("schema");
+  writer.StartObject(); // {
+
   writer.Key("type");
   writer.String("object");
+
+  writer.Key("title");
+  writer.String("BlackMagic (SDI)");
+
+  writer.Key("description");
+  writer.String("");
 
   // required
   writer.Key("required");
   writer.StartArray(); // [
-  writer.String("uid");
-  writer.String("name");
+  writer.String(UID);
+  writer.String(NAME);
   writer.EndArray(); // ] // required
 
   writer.Key("properties");
@@ -52,12 +66,12 @@ std::string getJsonSchema()
   writer.Key(UID);
   writer.StartObject(); // {
   writer.Key("title");
-  writer.String("UID");
+  writer.String("ID");
   writer.Key("type");
-  writer.String("string");
+  writer.String("number");
   writer.Key("readOnly");
   writer.Bool(true);
-  writer.EndObject(); // } // uid
+  writer.EndObject(); // } // id
 
   // name
   writer.Key(NAME);
@@ -67,6 +81,19 @@ std::string getJsonSchema()
   writer.Key("type");
   writer.String("string");
   writer.EndObject(); // } // name
+
+  // type
+  writer.Key(TYPE);
+  writer.StartObject(); // {
+  writer.Key("title");
+  writer.String("Type");
+  writer.Key("type");
+  writer.String("string");
+  writer.Key("default");
+  writer.String("BlackMagic (SDI)");
+  writer.Key("readOnly");
+  writer.Bool(true);
+  writer.EndObject(); // } // type
 
   // autostart
   writer.Key(AUTOSTART);
@@ -140,8 +167,10 @@ std::string getJsonSchema()
   writer.Key("title");
   writer.String("Field Order");
   writer.Key("type");
-  writer.String("enum");
+  writer.String("string");
   writer.Key("default");
+  writer.String("Progressive");
+  writer.Key("enum");
   writer.StartArray(); // [
   std::list<std::string> l = { "Progressive", "Field_TT", "Field_BB", "Field_TB", "Field_BT"};
   for(auto it = l.begin(); it != l.end(); it++)
@@ -172,6 +201,10 @@ std::string getJsonSchema()
   writer.EndObject(); // } // extra
 
   writer.EndObject(); // } // properties
+
+  writer.EndObject(); // } // scchema
+
+  writer.EndObject(); // } // "BlackMagic (SDI)"
 
   writer.EndObject(); // }
 

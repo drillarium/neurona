@@ -45,7 +45,7 @@ class JsonSchemaBloc {
       schema.model = jsonModel;
       _jsonSchema.add(schema);
     } else {
-      jsonMap["title"] = "New ${jsonMap['title']}";
+      jsonMap["title"] = jsonMap['title'];
       _jsonSchema.add(Schema.fromJson(jsonMap));
     }
   }
@@ -59,7 +59,7 @@ class JsonSchemaBloc {
       schema.model = jsonModel;
       _jsonSchema.add(schema);
     } else {
-      jsonMap["title"] = "New ${jsonMap['title']}";
+      jsonMap["title"] = jsonMap['title'];
       _jsonSchema.add(Schema.fromJson(jsonMap));
     }
   }

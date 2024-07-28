@@ -47,6 +47,7 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   web_socket_channel: ^3.0.0
   window_manager: ^0.3.9
+  auto_size_text: ^3.0.0
 
 dev_dependencies:
   flutter_test:

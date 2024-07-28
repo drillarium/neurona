@@ -1,11 +1,12 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:neurona/models/users.dart';
 import 'package:neurona/pages/home.dart';
 import 'package:neurona/pages/login.dart';
 import 'package:neurona/services/api.service.dart';
 import 'package:neurona/services/language.service.dart';
+import 'package:neurona/services/ws.service.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -22,6 +23,9 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isRegisterButtonEnabled = false;
   bool _isErrorVisible = false;
   Timer? _errorTimer;
+  final WebSocketClient? _webSocketClient = WebSocketClient.instance;
+  String _statusMessage = "";
+  late StreamSubscription<ConnectionStatus> _status;
 
   @override
   void initState() {
@@ -29,6 +33,14 @@ class _RegisterPageState extends State<RegisterPage> {
     _nameController.addListener(_updateRegisterButtonState);
     _emailController.addListener(_updateRegisterButtonState);
     _passwordController.addListener(_updateRegisterButtonState);
+    // connection to server status
+    _statusMessage =
+        WebSocketClient.connectionStatusToText(_webSocketClient!.lastStatus);
+    _status = _webSocketClient.status.listen((status) {
+      setState(() {
+        _statusMessage = WebSocketClient.connectionStatusToText(status);
+      });
+    });
   }
 
   @override
@@ -37,6 +49,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _errorTimer?.cancel();
+    _status.cancel();
     super.dispose();
   }
 
@@ -93,13 +106,28 @@ class _RegisterPageState extends State<RegisterPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Center(
+          child: Image.asset(
+            'assets/images/icon-1024x1024.png',
+            fit: BoxFit.fill,
+            width: 240,
+            height: 240,
+          ),
+        ),
+        const SizedBox(height: 15),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text(_statusMessage,
+              style: const TextStyle(color: Colors.black, fontSize: 12.0)),
+        ]),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
+              child: AutoSizeText(
                 LanguageService.instance!.translate("register"),
                 style: const TextStyle(color: Colors.black, fontSize: 48.0),
+                maxLines: 1,
+                minFontSize: 12,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

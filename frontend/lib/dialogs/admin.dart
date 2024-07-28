@@ -100,29 +100,48 @@ class _AdminDialogState extends State<AdminDialog> {
   }
 
   buildSchema() {
+    if (selectedAdmin == backednAdmin) {
+      return buildSchemaInternal("assets/json/backend.json", jsonModel);
+    }
+
+    if (selectedItemIndex == -1) {
+      return buildSchemaInternal("", jsonModel);
+    }
+
     if (selectedAdmin == userAdmin) {
-      return Expanded(
-        child: buildSchemaInternal("assets/json/users.json", jsonModel),
-      );
-    } else if (selectedAdmin == launcherAdmin) {
+      return buildSchemaInternal("assets/json/users.json", jsonModel);
+    }
+
+    if (selectedAdmin == launcherAdmin) {
       if (!showLauncherConfig) {
-        return Expanded(
-          child: buildSchemaInternal("assets/json/launchers.json", jsonModel),
-        );
-      } else {
-        return Expanded(
-          child: buildSchemaInternal("assets/json/launcher.json", jsonModel),
-        );
+        return buildSchemaInternal("assets/json/launchers.json", jsonModel);
       }
-    } else if (selectedAdmin == backednAdmin) {
-      return Expanded(
-        child: buildSchemaInternal("assets/json/backend.json", jsonModel),
-      );
+      return buildSchemaInternal("assets/json/launcher.json", jsonModel);
     }
   }
 
+  Map<String, dynamic> dummySchema(String text) {
+    var ret = {
+      "title": text,
+      "description": "",
+      "type": "object",
+      "required": [],
+      "properties": {"dummy": {}}
+    };
+
+    // worarround to make "properties" and empty Map<String, dynamic>
+    Map<String, dynamic> props = ret["properties"] as Map<String, dynamic>;
+    props.remove("dummy");
+
+    return ret;
+  }
+
   buildSchemaInternal(String schema, String model) {
-    jsonSchemaBloc.getSchema(schema, model);
+    if (schema.isEmpty) {
+      jsonSchemaBloc.getSchema2(dummySchema(""), jsonModel);
+    } else {
+      jsonSchemaBloc.getSchema(schema, model);
+    }
     return StreamBuilder<Schema>(
       stream: jsonSchemaBloc.jsonSchema,
       builder: (context, snapshot) {
@@ -131,7 +150,7 @@ class _AdminDialogState extends State<AdminDialog> {
             schema: snapshot.data!,
             jsonSchemaBloc: jsonSchemaBloc,
             onSubmit: (model) {
-              if (selectedAdmin == launcherAdmin ||
+              if ((selectedAdmin == launcherAdmin && showLauncherConfig) ||
                   selectedAdmin == backednAdmin) {
                 setMessage("error", "Not supported");
                 return;
@@ -203,6 +222,12 @@ class _AdminDialogState extends State<AdminDialog> {
           setState(() {
             selectedAdmin = userAdmin;
             users = response;
+            if (users!.isEmpty) {
+              selectedItemIndex = -1;
+            } else if (selectedItemIndex < 0 ||
+                selectedItemIndex >= users!.length) {
+              selectedItemIndex = 0;
+            }
             jsonModel =
                 selectedItemIndex >= 0 && selectedItemIndex < users!.length
                     ? jsonEncode(users![selectedItemIndex])
@@ -221,6 +246,12 @@ class _AdminDialogState extends State<AdminDialog> {
           setState(() {
             selectedAdmin = launcherAdmin;
             launchers = response;
+            if (launchers!.isEmpty) {
+              selectedItemIndex = -1;
+            } else if (selectedItemIndex < 0 ||
+                selectedItemIndex >= launchers!.length) {
+              selectedItemIndex = 0;
+            }
             jsonModel =
                 selectedItemIndex >= 0 && selectedItemIndex < launchers!.length
                     ? jsonEncode(launchers![selectedItemIndex])
@@ -336,28 +367,24 @@ class _AdminDialogState extends State<AdminDialog> {
     }
     // at least one launcher
     else if (selectedAdmin == launcherAdmin) {
-      if (launchers!.length > 1) {
-        ApiLauncherService.instance
-            ?.deleteLauncher(launchers![index].id)
-            .then((response) {
-          setState(() {
-            setMessage("info", "Host deleted");
-            launchers?.removeAt(index);
-            if (selectedItemIndex >= launchers!.length) {
-              selectedItemIndex = launchers!.isNotEmpty ? 0 : -1;
-            }
-            if (selectedItemIndex >= 0) {
-              jsonModel = jsonEncode(launchers![selectedItemIndex]);
-            } else {
-              jsonModel = "";
-            }
-          });
-        }).catchError((error) {
-          setMessage("error", "Error deleting launcher ${error.toString()}");
+      ApiLauncherService.instance
+          ?.deleteLauncher(launchers![index].id)
+          .then((response) {
+        setState(() {
+          setMessage("info", "Host deleted");
+          launchers?.removeAt(index);
+          if (selectedItemIndex >= launchers!.length) {
+            selectedItemIndex = launchers!.isNotEmpty ? 0 : -1;
+          }
+          if (selectedItemIndex >= 0) {
+            jsonModel = jsonEncode(launchers![selectedItemIndex]);
+          } else {
+            jsonModel = "";
+          }
         });
-      } else {
-        setMessage("error", "Last launcher cannot be deleted");
-      }
+      }).catchError((error) {
+        setMessage("error", "Error deleting launcher ${error.toString()}");
+      });
     }
     return "";
   }
@@ -492,7 +519,8 @@ class _AdminDialogState extends State<AdminDialog> {
                         IconButton(
                           onPressed: () {
                             setState(() {
-                              selectedItemIndex = -1;
+                              selectedItemIndex =
+                                  -2; // FIXME: buildSchema case -1 creates an empty schema, case -2 a valid schema for create a new launcher / user
                               jsonModel = "";
                             });
                           },
@@ -565,7 +593,9 @@ class _AdminDialogState extends State<AdminDialog> {
                       ),
                     ],
                   ),
-                  buildSchema()
+                  Expanded(
+                    child: buildSchema(),
+                  ),
                 ],
               ),
             ),

@@ -30,6 +30,8 @@ class ApiLauncherService {
         return jsonResponse
             .map((launcher) => Launcher.fromJson(launcher))
             .toList();
+      } else if (response.statusCode == 204) {
+        return [];
       } else {
         throw Exception('Failed to get launchers');
       }

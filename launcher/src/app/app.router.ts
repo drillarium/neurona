@@ -32,16 +32,12 @@ appsRouter.get("/", async(req: Request, res: Response) => {
 // GET all applications
 appsRouter.get("/all", async(req: Request, res: Response) => {
   try {
-    var apps = appController.apps;
+    var apps = await appController.apps;
+
     if(!apps) {            
       throw Error("applications() error");
     }
-    if(apps.length > 0) {
-      res.status(200).send(apps);
-    }
-    else {
-      res.status(204).send();
-    }
+    res.status(200).send(apps);
   }
   catch(error: any) {
     logger.error(`GET "/all" ${JSON.stringify(error)}`);
@@ -117,17 +113,19 @@ appsRouter.put("/:appid", async(req: Request, res: Response) => {
 });
 
 // delete app
-appsRouter.delete("/:appuid", async(req: Request, res: Response) => {
+appsRouter.delete("/:appid/:appuid", async(req: Request, res: Response) => {
+  const appid = req?.params?.appid;
   const appuid = req?.params?.appuid;
+
   try {
-    const { result, error } = appController.deleteApplication(appuid);
+    const { result, error } = appController.deleteApplication(appid, appuid);
     if(!result) {
       throw new Error(error);
     }
     res.status(200).send();
   }
   catch(error: any) {
-    logger.error(`DELETE "/:appuid" ${JSON.stringify(error)}`);
+    logger.error(`DELETE "/:appid/:type/:appuid" ${JSON.stringify(error)}`);
     res.status(400).send(error.message);
   }
 });
@@ -136,6 +134,7 @@ appsRouter.delete("/:appuid", async(req: Request, res: Response) => {
 appsRouter.post("/:appid", async(req: Request, res: Response) => {
   const appid = req?.params?.appid;
   const newConfig = req.body;
+
   try {
     const { result, error } = appController.createConfiguration(appid, newConfig);
     if(!result) {

@@ -203,7 +203,7 @@ export class LauncherController {
     }
 
     // getApps
-    public async getApps() : Promise<AppInfo[]> {
+    public async getApps() : Promise<any> {
         try {
             const uri = this.address_ + "/api/v1/apps/all";
             const response = await fetch(uri, {
@@ -264,7 +264,7 @@ export class LauncherController {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: config
+                body: JSON.stringify(config)
             });
     
             if (!response.ok) {
@@ -283,16 +283,17 @@ export class LauncherController {
     }
 
     // delete application
-    public async deleteApp(appUID: string) : Promise<void> {
+    public async deleteApp(appId: string, appUID: number) : Promise<void> {
         try {
-            const uri = this.address_ + "/api/v1/apps/" + appUID;
+            var uri = this.address_ + "/api/v1/apps/" + appId + "/" + appUID;
+            uri = encodeURI(uri);
             const response = await fetch(uri, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-    
+
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -317,7 +318,7 @@ export class LauncherController {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: config
+                body: JSON.stringify(config)
             });
     
             if (!response.ok) {

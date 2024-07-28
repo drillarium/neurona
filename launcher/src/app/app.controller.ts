@@ -5,8 +5,8 @@ import { logger } from '../logger';
 import { spawn, ChildProcess } from 'child_process';
 
 interface AppInfo {
-  type: string;
-  uid: string;
+  type: string;         // "ffmpeg-input"
+  id: number;
   name: string;
   appid: string;        // client app that creates the app
   appuid: string;       // client app uid
@@ -101,11 +101,17 @@ export class AppController {
   }
 
   // apps
-  public get apps() : AppInfo[] {
-    const appInfos: AppInfo[] = [];
+  public get apps() : any {
+    var appInfos: any = {};
 
     for(const value of this.apps_.values()) {
-      appInfos.push(value.appInfo);
+      const keyToCheck = value.appInfo.type;
+      if(keyToCheck in appInfos) {
+        appInfos[keyToCheck].push(value.config);
+      }
+      else {
+        appInfos[keyToCheck] = [];
+      }
     }
 
     return appInfos;
@@ -128,43 +134,9 @@ export class AppController {
 
           // Iterate through each file in the subfolder
           for(const file of files) {
-            if(file.endsWith('.json')) {
-              const filePath = path.join(subfolderPath, file);
+            if(file.endsWith('.json')) {           
 
-              try {
-                // Read JSON file and extract name and uid
-                const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-                const { name, uid, appid, appuid, appsession, autostart } = jsonData;
-
-                const program = `${subfolderPath}\\${subfolder.name}.exe`;
-                const args = ["-c", file];
-                const appRunningInfo: AppRunningInfo = {
-                    appInfo: {
-                        type: subfolder.name,
-                        name: name,
-                        uid: uid,
-                        appid: appid,
-                        appuid: appuid,
-                        appsession: appsession,
-                        running: false                                      
-                    },
-                    autostart: autostart,                    
-                    program: program,
-                    args: args,   
-                    config: jsonData, 
-                    status: null,
-                    process: null,
-                    kill: false     
-                };
-
-                // Create FolderInfo object and push to array       
-                this.apps_.set(appRunningInfo.appInfo.uid, appRunningInfo);
-
-                logger.info(`Application configuration found '${program} ${args.join(' ')}' config: ${JSON.stringify(jsonData)}`);
-              }
-              catch(error: any) {
-                logger.error(`Error parsing JSON file ${filePath}: ${error.message}`);
-              }
+              this.registerApp(subfolderPath, file, subfolder.name);                          
             }
           }
         }
@@ -172,6 +144,46 @@ export class AppController {
     }
     catch(error: any) {
       logger.error(`Error reading folder: ${error.message}`);
+    }
+  }
+
+  protected registerApp(subfolderPath: string, file: string, appType: string) {
+    const filePath = path.join(subfolderPath, file);
+
+    try {
+      // Read JSON file and extract name and uid
+      const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      const { name, id, appid, appuid, appsession, autostart } = jsonData;
+
+      const program = `${subfolderPath}\\${appType}.exe`;
+      const args = ["-c", file];
+      const appRunningInfo: AppRunningInfo = {
+          appInfo: {
+              type: appType,
+              name: name,
+              id: id,
+              appid: appid,
+              appuid: appuid,
+              appsession: appsession,
+              running: false                                      
+          },
+          autostart: autostart,                    
+          program: program,
+          args: args,   
+          config: jsonData, 
+          status: null,
+          process: null,
+          kill: false     
+      };
+
+      // Create FolderInfo object and push to array       
+      const uid = this.appUID(appRunningInfo);
+      this.apps_.set(uid, appRunningInfo);
+
+      logger.info(`Application configuration found '${program} ${args.join(' ')}' config: ${JSON.stringify(jsonData)}`);
+    }
+    catch(error: any) {
+      logger.error(`Error parsing JSON file ${filePath}: ${error.message}`);
     }
   }
 
@@ -184,18 +196,23 @@ export class AppController {
     });
   }
 
+  protected appUID(app: AppRunningInfo) {
+    return `${app.appInfo.type}####${app.appInfo.id}`;
+  }
+
   // start app
   protected startApp(app: AppRunningInfo) : boolean {
-    if(this.isRunning(app.appInfo.uid)) {
-        logger.info(`App ${app.appInfo.uid} already running`);
+    const uid = this.appUID(app);
+    if(this.isRunning(uid)) {
+        logger.info(`App ${uid} already running`);
         return false;
     }
 
     // process
     app.process = spawn(app.program, app.args);
     app.process.on('spawn', () => {
-        logger.info(`App ${app.appInfo.uid} is running`);
-        this.setIsRunning(app.appInfo.uid, true);       
+        logger.info(`App ${uid} is running`);
+        this.setIsRunning(uid, true);       
     });
     app.process.stdout!.on('data', (data) => {      
       var message = data.toString();
@@ -214,13 +231,13 @@ export class AppController {
           
           if(jmessage.type == "log") {
             if(jmessage.severity == "error") {
-              logger.error(`App ${app.appInfo.uid} message: ${jmessage.message}`);  
+              logger.error(`App ${uid} message: ${jmessage.message}`);  
             }
             else if(jmessage.severity == "warning") {
-              logger.warn(`App ${app.appInfo.uid} message: ${jmessage.message}`);
+              logger.warn(`App ${uid} message: ${jmessage.message}`);
             }
             else if(jmessage.severity == "info") {
-              logger.info(`App ${app.appInfo.uid} message: ${jmessage.message}`);
+              logger.info(`App ${uid} message: ${jmessage.message}`);
             }
           }
         }
@@ -233,18 +250,18 @@ export class AppController {
 
     });
     app.process.on('exit', (code: number, signal) => {
-      logger.info(`App ${app.appInfo.uid} exit code: ${code} signal: ${signal}`);
+      logger.info(`App ${uid} exit code: ${code} signal: ${signal}`);
     });
     app.process.on('close', (code: number, args: any[])=> {
-      logger.info(`App ${app.appInfo.uid} close code: ${code} arg: ${args}`);
-      this.setIsRunning(app.appInfo.uid, false);    
+      logger.info(`App ${uid} close code: ${code} arg: ${args}`);
+      this.setIsRunning(uid, false);    
       if(this.canRestartApp(app, code)) {
         this.startApp(app);
       }
       app.kill = false;
     });
     app.process.on('error', (error: string) => {
-      logger.info(`App ${app.appInfo.uid} error: ${error}`);
+      logger.info(`App ${uid} error: ${error}`);
     });
 
     return true;
@@ -283,7 +300,7 @@ export class AppController {
   // status
   public status(appuid: string) {
     var result: any | null = null;
-  var error: string = "";
+    var error: string = "";
 
     var app = this.apps_.get(appuid);
     if(app) {      
@@ -361,13 +378,13 @@ export class AppController {
 
   // update configuration
   public updateConfiguration(appid: string, newConfig: any) {
-    const appuid = newConfig.uid;
+    const appuid = `${appid}####${newConfig.id}`;
     var result: boolean = false;
     var error: string = "";
 
     var app = this.apps_.get(appuid);
-    if(app) {      
-      const configFile = path.join(this.appDirectory, appid, `${app.appInfo.uid}.json`);
+    if(app) {
+      const configFile = path.join(this.appDirectory, appid, `${app.appInfo.id}.json`);
       try {
         fs.writeFileSync(configFile, JSON.stringify(newConfig, null, 2));
         logger.info(`Configuration file ${configFile} saved. ${JSON.stringify(newConfig)}`);
@@ -387,9 +404,10 @@ export class AppController {
   }
 
   // delete app
-  public deleteApplication(appuid: string) {
+  public deleteApplication(appid: string, _appuid: string) {
     var result: boolean = false;
     var error: string = "";
+    const appuid = `${appid}####${_appuid}`;
 
     var app = this.apps_.get(appuid);
     if(app) {      
@@ -403,7 +421,7 @@ export class AppController {
       this.apps_.delete(appuid);
 
       // remove config file
-      const configFile = path.join(this.appDirectory, app.appInfo.type, `${app.appInfo.uid}.json`);
+      const configFile = path.join(this.appDirectory, app.appInfo.type, `${app.appInfo.id}.json`);
       try {
         fs.unlinkSync(configFile);
         logger.info(`Configuration file ${configFile} removed`);
@@ -424,16 +442,27 @@ export class AppController {
 
   // create configuration
   public createConfiguration(appid: string, newConfig: any) {
-    const appuid = newConfig.uid;
+    const appuid = `${appid}####${newConfig.id}`;
+    const configFileName = `${newConfig.id}.json`;
     var result: boolean = false;
     var error: string = "";
 
     var app = this.apps_.get(appuid);
     if(!app) {      
-      const configFile = path.join(this.appDirectory, appid, `${newConfig.uid}.json`);
+      const configFile = path.join(this.appDirectory, appid, configFileName);
       try {
         fs.writeFileSync(configFile, JSON.stringify(newConfig, null, 2));
-        logger.info(`Configuration file ${configFile} saved. ${JSON.stringify(newConfig)}`);
+        logger.info(`Configuration file ${configFile} saved. ${JSON.stringify(newConfig)}`);        
+
+        // register app
+        this.registerApp(this.appDirectory, configFileName, appid);
+
+        // case autostart, run it
+        var app = this.apps_.get(appuid);
+        if(app && app.autostart) {   
+          this.startApp(app);
+        }
+
         result = true;
       }
       catch(_error: any) {

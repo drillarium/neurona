@@ -103,27 +103,28 @@ class _jsonSchemaForm extends State<JsonSchemaForm> {
                       }).toList(),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        _formKey.currentState!.save();
-                        Map<String, dynamic> data = <String, dynamic>{};
-                        data['submit'] = true;
-                        widget.jsonSchemaBloc.jsonDataAdd.add(data);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      fixedSize: const Size(100, 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(1),
+                  if (widget.schema.properties.isNotEmpty)
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          _formKey.currentState!.save();
+                          Map<String, dynamic> data = <String, dynamic>{};
+                          data['submit'] = true;
+                          widget.jsonSchemaBloc.jsonDataAdd.add(data);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        fixedSize: const Size(100, 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(1),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(color: Colors.black, fontSize: 12.0),
                       ),
                     ),
-                    child: const Text(
-                      'Save',
-                      style: TextStyle(color: Colors.black, fontSize: 12.0),
-                    ),
-                  ),
                 ],
               ),
             ),

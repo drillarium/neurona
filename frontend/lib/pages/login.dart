@@ -1,11 +1,11 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:neurona/pages/home.dart';
 import 'package:neurona/pages/register.dart';
 import 'package:neurona/services/language.service.dart';
 import 'package:neurona/services/ws.service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class LoginPage extends StatefulWidget {
   final String error;
@@ -136,9 +136,11 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
+              child: AutoSizeText(
                 LanguageService.instance!.translate("login"),
                 style: const TextStyle(color: Colors.black, fontSize: 48.0),
+                maxLines: 1,
+                minFontSize: 12,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

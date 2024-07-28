@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:neurona/models/multiviewer.scene.dart';
 import 'package:neurona/provider/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 class MultiviewerCanvasComponent extends StatefulWidget {
-  const MultiviewerCanvasComponent({super.key});
+  MultiviewerScene? scene;
+  final Function() onSaveScene;
+
+  MultiviewerCanvasComponent({super.key, this.scene, required this.onSaveScene});
 
   @override
-  State<MultiviewerCanvasComponent> createState() =>
-      _MultiviewerCanvasComponentState();
+  State<MultiviewerCanvasComponent> createState() => _MultiviewerCanvasComponentState();
 }
 
 enum ResizeMode { noResize, topResize, bottomResize, leftResize, rightResize }
@@ -47,8 +50,7 @@ Rect screenRectToComponentRect(LTWH ltwm, Size size, Rect rect) {
   double wpp = ltwm.w / size.width;
   double hpp = ltwm.h / size.height;
 
-  return Rect.fromLTWH(ltwm.l + (rect.left * wpp), ltwm.t + (rect.top * hpp),
-      rect.width * wpp, rect.height * wpp);
+  return Rect.fromLTWH(ltwm.l + (rect.left * wpp), ltwm.t + (rect.top * hpp), rect.width * wpp, rect.height * wpp);
 }
 
 Offset componentPosToScreenPos(LTWH ltwm, Size size, Offset pos) {
@@ -63,13 +65,10 @@ Offset componentDeltaPosToScreenPos(LTWH ltwm, Size size, Offset pos) {
   return Offset(pos.dx / wpp, pos.dy / hpp);
 }
 
-class _MultiviewerCanvasComponentState
-    extends State<MultiviewerCanvasComponent> {
+class _MultiviewerCanvasComponentState extends State<MultiviewerCanvasComponent> {
   List<RectData> rectangles = [
-    RectData(
-        const Offset(50.0, 50.0), const Size(100, 100), screenSize, "Input 1"),
-    RectData(const Offset(150.0, 150.0), const Size(100, 100), screenSize,
-        "Input 2"),
+    // RectData(const Offset(50.0, 50.0), const Size(100, 100), screenSize, "Input 1"),
+    // RectData(const Offset(150.0, 150.0), const Size(100, 100), screenSize, "Input 2"),
   ];
   int selectedIndex = -1;
   ResizeMode resizeMode = ResizeMode.noResize;
@@ -77,39 +76,96 @@ class _MultiviewerCanvasComponentState
   Rect? initialRect;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant MultiviewerCanvasComponent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // if (oldWidget.someProperty != widget.someProperty) {
+    // Respond to property changes
+    // For example, fetch new data based on the new property value
+    // }
+
+    if (widget.scene == null) {
+      reset();
+    }
+    rectangles = sceneGetRects();
+  }
+
+  reset() {
+    screenSize = const Size(1920, 1080);
+    rectangles = [];
+    selectedIndex = -1;
+    resizeMode = ResizeMode.noResize;
+    startDragPosition = null;
+    initialRect = null;
+  }
+
+  List<RectData> sceneGetRects() {
+    if (widget.scene == null) {
+      return [];
+    } else {
+      List<RectData> ret = [];
+      for (var input in widget.scene!.inputs) {
+        RectData r =
+            RectData(input.id, Offset(input.x.toDouble(), input.y.toDouble()), Size(input.width.toDouble(), input.height.toDouble()), screenSize, input.name);
+        ret.add(r);
+      }
+
+      return ret;
+    }
+  }
+
+  updateSceneInputs() {
+    if (widget.scene == null) {
+      return;
+    } else {
+      for (var input in widget.scene!.inputs) {
+        for (var rect in rectangles) {
+          if (rect._id == input.id) {
+            input.x = rect._position.dx.toInt();
+            input.y = rect._position.dy.toInt();
+            input.width = rect._size.width.toInt();
+            input.height = rect._size.height.toInt();
+          }
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return GestureDetector(
+        onPanEnd: (details) {
+          updateSceneInputs();
+
+          // save current scene
+          widget.onSaveScene();
+        },
         onPanStart: (details) {
           if (selectedIndex != -1) {
-            LTWH ltwh = componentToScreen(
-                Size(constraints.maxWidth, constraints.maxHeight), screenSize);
+            LTWH ltwh = componentToScreen(Size(constraints.maxWidth, constraints.maxHeight), screenSize);
 
-            Rect componentRect = screenRectToComponentRect(
-                ltwh, screenSize, rectangles[selectedIndex].rect);
+            Rect componentRect = screenRectToComponentRect(ltwh, screenSize, rectangles[selectedIndex].rect);
 
             final rect = componentRect;
             const centerRectSize = 10.0;
             final centerTop = Offset(rect.center.dx, rect.top);
-            final centerTopRect = Rect.fromCenter(
-                center: centerTop,
-                width: centerRectSize,
-                height: centerRectSize);
+            final centerTopRect = Rect.fromCenter(center: centerTop, width: centerRectSize, height: centerRectSize);
             final centerBottom = Offset(rect.center.dx, rect.bottom);
-            final centerBottomRect = Rect.fromCenter(
-                center: centerBottom,
-                width: centerRectSize,
-                height: centerRectSize);
+            final centerBottomRect = Rect.fromCenter(center: centerBottom, width: centerRectSize, height: centerRectSize);
             final centerLeft = Offset(rect.left, rect.center.dy);
-            final centerLeftRect = Rect.fromCenter(
-                center: centerLeft,
-                width: centerRectSize,
-                height: centerRectSize);
+            final centerLeftRect = Rect.fromCenter(center: centerLeft, width: centerRectSize, height: centerRectSize);
             final centerRight = Offset(rect.right, rect.center.dy);
-            final centerRightRect = Rect.fromCenter(
-                center: centerRight,
-                width: centerRectSize,
-                height: centerRectSize);
+            final centerRightRect = Rect.fromCenter(center: centerRight, width: centerRectSize, height: centerRectSize);
 
             if (centerTopRect.contains(details.localPosition)) {
               resizeMode = ResizeMode.topResize;
@@ -156,30 +212,20 @@ class _MultiviewerCanvasComponentState
               }
 
               setState(() {
-                LTWH ltwh = componentToScreen(
-                    Size(constraints.maxWidth, constraints.maxHeight),
-                    screenSize);
+                LTWH ltwh = componentToScreen(Size(constraints.maxWidth, constraints.maxHeight), screenSize);
                 Offset newLeftTop = Offset(newLeft, newTop);
-                newLeftTop =
-                    componentPosToScreenPos(ltwh, screenSize, newLeftTop);
-                Offset newRightBottom =
-                    Offset(newLeft + newWidth, newTop + newHeight);
-                newRightBottom =
-                    componentPosToScreenPos(ltwh, screenSize, newRightBottom);
+                newLeftTop = componentPosToScreenPos(ltwh, screenSize, newLeftTop);
+                Offset newRightBottom = Offset(newLeft + newWidth, newTop + newHeight);
+                newRightBottom = componentPosToScreenPos(ltwh, screenSize, newRightBottom);
 
-                rectangles[selectedIndex].size = Size(
-                    newRightBottom.dx - newLeftTop.dx,
-                    newRightBottom.dy - newLeftTop.dy);
+                rectangles[selectedIndex].size = Size(newRightBottom.dx - newLeftTop.dx, newRightBottom.dy - newLeftTop.dy);
                 rectangles[selectedIndex].position = newLeftTop;
               });
             } else {
               // Move the rectangle
               setState(() {
-                LTWH ltwh = componentToScreen(
-                    Size(constraints.maxWidth, constraints.maxHeight),
-                    screenSize);
-                Offset delta = componentDeltaPosToScreenPos(
-                    ltwh, screenSize, details.delta);
+                LTWH ltwh = componentToScreen(Size(constraints.maxWidth, constraints.maxHeight), screenSize);
+                Offset delta = componentDeltaPosToScreenPos(ltwh, screenSize, details.delta);
                 rectangles[selectedIndex].position += delta;
               });
             }
@@ -187,11 +233,9 @@ class _MultiviewerCanvasComponentState
         },
         onTapDown: (details) {
           setState(() {
-            LTWH ltwh = componentToScreen(
-                Size(constraints.maxWidth, constraints.maxHeight), screenSize);
+            LTWH ltwh = componentToScreen(Size(constraints.maxWidth, constraints.maxHeight), screenSize);
             for (int i = 0; i < rectangles.length; i++) {
-              Rect componentRect = screenRectToComponentRect(
-                  ltwh, screenSize, rectangles[i].rect);
+              Rect componentRect = screenRectToComponentRect(ltwh, screenSize, rectangles[i].rect);
               if (componentRect.contains(details.localPosition)) {
                 selectedIndex = i;
                 break;
@@ -201,12 +245,10 @@ class _MultiviewerCanvasComponentState
         },
         onTapUp: (details) {
           setState(() {
-            LTWH ltwh = componentToScreen(
-                Size(constraints.maxWidth, constraints.maxHeight), screenSize);
+            LTWH ltwh = componentToScreen(Size(constraints.maxWidth, constraints.maxHeight), screenSize);
             bool deselect = true;
             for (int i = 0; i < rectangles.length; i++) {
-              Rect componentRect = screenRectToComponentRect(
-                  ltwh, screenSize, rectangles[i].rect);
+              Rect componentRect = screenRectToComponentRect(ltwh, screenSize, rectangles[i].rect);
               if (componentRect.contains(details.localPosition)) {
                 deselect = false;
                 break;
@@ -222,11 +264,10 @@ class _MultiviewerCanvasComponentState
         child: CustomPaint(
           size: MediaQuery.of(context).size,
           painter: RectanglePainter(
+            widget.scene,
             rectangles,
             selectedIndex,
-            Provider.of<ThemeProvider>(context).isDarkMode
-                ? const Color.fromRGBO(43, 46, 56, 1)
-                : const Color.fromRGBO(219, 222, 213, 1),
+            Provider.of<ThemeProvider>(context).isDarkMode ? const Color.fromRGBO(43, 46, 56, 1) : const Color.fromRGBO(219, 222, 213, 1),
           ),
         ),
       );
@@ -238,15 +279,15 @@ class RectanglePainter extends CustomPainter {
   final List<RectData> rectangles;
   final int selectedIndex;
   final Color bkColor;
+  final MultiviewerScene? scene;
 
-  RectanglePainter(this.rectangles, this.selectedIndex, this.bkColor);
+  RectanglePainter(this.scene, this.rectangles, this.selectedIndex, this.bkColor);
 
   @override
   void paint(Canvas canvas, Size size) {
     // Paint the background in gray color
     Paint backgroundPaint = Paint()..color = bkColor;
-    canvas.drawRect(
-        Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
 
     // rectangle
     LTWH ltwh = componentToScreen(size, screenSize);
@@ -261,7 +302,7 @@ class RectanglePainter extends CustomPainter {
     // dimensions
     TextPainter hpainter = TextPainter(
       text: TextSpan(
-        text: 'Size: ${screenSize.width.toInt()}x${screenSize.height.toInt()}',
+        text: scene == null ? "" : 'Size: ${screenSize.width.toInt()}x${screenSize.height.toInt()}',
         style: const TextStyle(
           color: Colors.green,
           fontSize: 14.0,
@@ -287,8 +328,7 @@ class RectanglePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < rectangles.length; i++) {
-      Rect componentRect =
-          screenRectToComponentRect(ltwh, screenSize, rectangles[i].rect);
+      Rect componentRect = screenRectToComponentRect(ltwh, screenSize, rectangles[i].rect);
 
       if (i == selectedIndex) {
         fillPaint.color = Colors.red;
@@ -386,24 +426,18 @@ class RectanglePainter extends CustomPainter {
 
         // Draw lines
         final linePaint = Paint()..color = Colors.green;
-        canvas.drawLine(componentRect.topCenter,
-            Offset(componentRect.topCenter.dx, ltwh.t), linePaint);
-        canvas.drawLine(componentRect.bottomCenter,
-            Offset(componentRect.bottomCenter.dx, ltwh.t + ltwh.h), linePaint);
-        canvas.drawLine(componentRect.centerLeft,
-            Offset(ltwh.l, componentRect.centerLeft.dy), linePaint);
-        canvas.drawLine(componentRect.centerRight,
-            Offset(ltwh.l + ltwh.w, componentRect.centerRight.dy), linePaint);
+        canvas.drawLine(componentRect.topCenter, Offset(componentRect.topCenter.dx, ltwh.t), linePaint);
+        canvas.drawLine(componentRect.bottomCenter, Offset(componentRect.bottomCenter.dx, ltwh.t + ltwh.h), linePaint);
+        canvas.drawLine(componentRect.centerLeft, Offset(ltwh.l, componentRect.centerLeft.dy), linePaint);
+        canvas.drawLine(componentRect.centerRight, Offset(ltwh.l + ltwh.w, componentRect.centerRight.dy), linePaint);
 
         // Create a TextPainter object
         double distTop = componentRect.topCenter.dy - ltwh.t;
         double distRight = (ltwh.l + ltwh.w) - componentRect.centerRight.dx;
         double distLeft = componentRect.centerLeft.dx - ltwh.l;
         double distBottom = (ltwh.t + ltwh.h) - componentRect.bottomCenter.dy;
-        Offset lt = componentDeltaPosToScreenPos(
-            ltwh, screenSize, Offset(distLeft, distTop));
-        Offset rb = componentDeltaPosToScreenPos(
-            ltwh, screenSize, Offset(distRight, distBottom));
+        Offset lt = componentDeltaPosToScreenPos(ltwh, screenSize, Offset(distLeft, distTop));
+        Offset rb = componentDeltaPosToScreenPos(ltwh, screenSize, Offset(distRight, distBottom));
 
         TextPainter rpainter = TextPainter(
           text: TextSpan(
@@ -418,10 +452,7 @@ class RectanglePainter extends CustomPainter {
 
         // Layout and paint the text
         rpainter.layout();
-        rpainter.paint(
-            canvas,
-            Offset(componentRect.centerRight.dx + 15,
-                componentRect.centerRight.dy - 15));
+        rpainter.paint(canvas, Offset(componentRect.centerRight.dx + 15, componentRect.centerRight.dy - 15));
 
         TextPainter tpainter = TextPainter(
           text: TextSpan(
@@ -435,10 +466,7 @@ class RectanglePainter extends CustomPainter {
         );
 
         tpainter.layout();
-        tpainter.paint(
-            canvas,
-            Offset(componentRect.topCenter.dx + 10,
-                componentRect.topCenter.dy - 20));
+        tpainter.paint(canvas, Offset(componentRect.topCenter.dx + 10, componentRect.topCenter.dy - 20));
 
         TextPainter lpainter = TextPainter(
           text: TextSpan(
@@ -452,10 +480,7 @@ class RectanglePainter extends CustomPainter {
         );
 
         lpainter.layout();
-        lpainter.paint(
-            canvas,
-            Offset(componentRect.centerLeft.dx - 40,
-                componentRect.centerLeft.dy - 15));
+        lpainter.paint(canvas, Offset(componentRect.centerLeft.dx - 40, componentRect.centerLeft.dy - 15));
 
         TextPainter bpainter = TextPainter(
           text: TextSpan(
@@ -469,15 +494,11 @@ class RectanglePainter extends CustomPainter {
         );
 
         bpainter.layout();
-        bpainter.paint(
-            canvas,
-            Offset(componentRect.bottomCenter.dx + 10,
-                componentRect.bottomCenter.dy + 10));
+        bpainter.paint(canvas, Offset(componentRect.bottomCenter.dx + 10, componentRect.bottomCenter.dy + 10));
 
         TextPainter spainter = TextPainter(
           text: TextSpan(
-            text:
-                '${rectangles[i].size.width.toInt()}x${rectangles[i].size.height.toInt()} px\n${rectangles[i].name}',
+            text: '${rectangles[i].size.width.toInt()}x${rectangles[i].size.height.toInt()} px\n${rectangles[i].name}',
             style: const TextStyle(
               color: Colors.green,
               fontSize: 10.0,
@@ -487,8 +508,7 @@ class RectanglePainter extends CustomPainter {
         );
 
         spainter.layout();
-        spainter.paint(
-            canvas, Offset(componentRect.left + 5, componentRect.top + 5));
+        spainter.paint(canvas, Offset(componentRect.left + 5, componentRect.top + 5));
       }
     }
   }
@@ -501,30 +521,28 @@ class RectanglePainter extends CustomPainter {
 
 // position and size are screen coordinates
 class RectData {
+  int _id;
   Offset _position;
   Size _size;
   final String _name;
   final Size _screenSize;
   static Size minSize = const Size(30, 30);
 
-  RectData(
-      Offset initialPosition, Size initialSize, Size screenSize, this._name)
-      : _position = initialPosition,
+  RectData(int id, Offset initialPosition, Size initialSize, Size screenSize, this._name)
+      : _id = id,
+        _position = initialPosition,
         _size = initialSize,
         _screenSize = screenSize;
 
-  Rect get rect => Rect.fromPoints(_position,
-      Offset(_position.dx + _size.width, _position.dy + _size.height));
+  Rect get rect => Rect.fromPoints(_position, Offset(_position.dx + _size.width, _position.dy + _size.height));
 
   Size get size => _size;
   Offset get position => _position;
   String get name => _name;
 
   set size(Size value) {
-    double width =
-        value.width.clamp(minSize.width, _screenSize.width - _position.dx);
-    double height =
-        value.height.clamp(minSize.height, _screenSize.height - _position.dy);
+    double width = value.width.clamp(minSize.width, _screenSize.width - _position.dx);
+    double height = value.height.clamp(minSize.height, _screenSize.height - _position.dy);
     _size = Size(width, height);
   }
 

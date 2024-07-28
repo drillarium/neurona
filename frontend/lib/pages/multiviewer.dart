@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:neurona/components/multiviewer.canvas.dart';
 import 'package:neurona/components/multiviewer.list.dart';
@@ -30,8 +29,7 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
       context: context,
       builder: (BuildContext context) {
         return Center(
-          child:
-              MultiviewerAdminDialog(engineType: engineType, sceneId: sceneId),
+          child: MultiviewerAdminDialog(engineType: engineType, sceneId: sceneId),
         );
       },
     );
@@ -122,6 +120,11 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
     return _listScenes[index].outputs;
   }
 
+  String captionText() {
+    String text = _sceneIndex >= 0 ? _listScenes[_sceneIndex].name : "No scene selected";
+    return "Multiviewer - $text";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,17 +132,11 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
         preferredSize: const Size.fromHeight(40.0),
         child: AppBar(
           title: Text(
-            'Multiviewer',
+            captionText(),
             style: TextStyle(
               fontSize: 16.0,
-              color: Provider.of<ThemeProvider>(context).isDarkMode
-                  ? Colors.white
-                  : Colors.black,
+              color: Provider.of<ThemeProvider>(context).isDarkMode ? Colors.white : Colors.black,
             ),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.play_arrow),
-            onPressed: () {},
           ),
         ),
       ),
@@ -148,9 +145,16 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
         child: Column(
           children: [
             // First row with 80% height
-            const Expanded(
+            Expanded(
               flex: 7,
-              child: MultiviewerCanvasComponent(),
+              child: MultiviewerCanvasComponent(
+                scene: _sceneIndex >= 0 ? _listScenes[_sceneIndex] : null,
+                onSaveScene: () {
+                  if (_sceneIndex >= 0) {
+                    MultiviewerService.instance!.updateScene(_listScenes[_sceneIndex]);
+                  }
+                },
+              ),
             ),
             const SizedBox(height: 4),
             // Second row with three cells
@@ -161,19 +165,15 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                   // First cell
                   Expanded(
                     child: Container(
-                      color: Provider.of<ThemeProvider>(context).isDarkMode
-                          ? const Color.fromRGBO(43, 46, 56, 1)
-                          : const Color.fromRGBO(219, 222, 213, 1),
+                      color: Provider.of<ThemeProvider>(context).isDarkMode ? const Color.fromRGBO(43, 46, 56, 1) : const Color.fromRGBO(219, 222, 213, 1),
                       child: MultiviewerListComponent(
                           title: "Scenes",
-                          itemList:
-                              _listScenes.map((item) => item.name).toList(),
+                          itemList: _listScenes.map((item) => item.name).toList(),
                           onAddItem: () {
                             _showManageInputsDialog(context, EngineType.scene);
                           },
                           onRemoveItem: (int index) async {
-                            String? result =
-                                await _showRemoveConfirmationDialog();
+                            String? result = await _showRemoveConfirmationDialog();
                             if (result == "Ok") {
                               setState(() {});
                             }
@@ -199,19 +199,14 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                   // Second cell
                   Expanded(
                     child: Container(
-                      color: Provider.of<ThemeProvider>(context).isDarkMode
-                          ? const Color.fromRGBO(43, 46, 56, 1)
-                          : const Color.fromRGBO(219, 222, 213, 1),
+                      color: Provider.of<ThemeProvider>(context).isDarkMode ? const Color.fromRGBO(43, 46, 56, 1) : const Color.fromRGBO(219, 222, 213, 1),
                       child: MultiviewerListComponent(
                           title: "Inputs",
-                          itemList: inputList(_sceneIndex)
-                              .map((item) => item.name)
-                              .toList(),
+                          itemList: inputList(_sceneIndex).map((item) => item.name).toList(),
                           onAddItem: _sceneIndex < 0
                               ? null
                               : () {
-                                  _showManageInputsDialog(
-                                      context, EngineType.input);
+                                  _showManageInputsDialog(context, EngineType.input);
 
                                   // widget._listInputs
                                   //    .add('Input ${widget._listInputs.length + 1}');
@@ -242,19 +237,14 @@ class _MultiviewerPageState extends State<MultiviewerPage> {
                   // Third cell
                   Expanded(
                     child: Container(
-                      color: Provider.of<ThemeProvider>(context).isDarkMode
-                          ? const Color.fromRGBO(43, 46, 56, 1)
-                          : const Color.fromRGBO(219, 222, 213, 1),
+                      color: Provider.of<ThemeProvider>(context).isDarkMode ? const Color.fromRGBO(43, 46, 56, 1) : const Color.fromRGBO(219, 222, 213, 1),
                       child: MultiviewerListComponent(
                           title: "Outputs",
-                          itemList: outputList(_sceneIndex)
-                              .map((item) => item.name)
-                              .toList(),
+                          itemList: outputList(_sceneIndex).map((item) => item.name).toList(),
                           onAddItem: _sceneIndex < 0
                               ? null
                               : () {
-                                  _showManageInputsDialog(
-                                      context, EngineType.output);
+                                  _showManageInputsDialog(context, EngineType.output);
 
                                   /* widget._listOutputs
                               .add('Output ${widget._listOutputs.length + 1}');

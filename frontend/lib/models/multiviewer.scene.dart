@@ -1,10 +1,10 @@
 class MultiviewerInput {
   final int id;
-  final String name;
-  final int x;
-  final int y;
-  final int width;
-  final int height;
+  String name;
+  int x;
+  int y;
+  int width;
+  int height;
 
   MultiviewerInput({
     required this.id,
@@ -40,7 +40,7 @@ class MultiviewerInput {
 
 class MultiviewerOutput {
   final int id;
-  final String name;
+  String name;
 
   MultiviewerOutput({
     required this.id,
@@ -70,7 +70,7 @@ class MultiviewerScene {
   final String launcher;
   final int width;
   final int height;
-  final List<MultiviewerInput> inputs;
+  List<MultiviewerInput> inputs;
   final List<MultiviewerOutput> outputs;
 
   MultiviewerScene({
@@ -88,17 +88,13 @@ class MultiviewerScene {
     List<MultiviewerInput> inputsList = [];
     if (json.containsKey('inputs')) {
       var inputsFromJson = json['inputs'] as List;
-      inputsList = inputsFromJson
-          .map((inputJson) => MultiviewerInput.fromJson(inputJson))
-          .toList();
+      inputsList = inputsFromJson.map((inputJson) => MultiviewerInput.fromJson(inputJson)).toList();
     }
 
     List<MultiviewerOutput> outputsList = [];
     if (json.containsKey('outputs')) {
       var outputsFromJson = json['outputs'] as List;
-      outputsList = outputsFromJson
-          .map((outputJson) => MultiviewerOutput.fromJson(outputJson))
-          .toList();
+      outputsList = outputsFromJson.map((outputJson) => MultiviewerOutput.fromJson(outputJson)).toList();
     }
 
     return MultiviewerScene(

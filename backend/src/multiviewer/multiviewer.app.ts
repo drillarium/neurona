@@ -120,7 +120,7 @@ export class MultiviewerApp {
     }
 
     // get scene
-    public async  getSceneGUI(id: number) : Promise<any | null> {
+    public async getSceneGUI(id: number) : Promise<any | null> {
         const index = this.scenes.findIndex(scene => scene.id === id);
         if(index >= 0) {
             var sceneGUI: any = { ... this.scenes[index].scene };
@@ -263,7 +263,7 @@ export class MultiviewerApp {
         }
     }
 
-    // modify scene components
+    // scene inputs
     public async addInput(id: number, input: IInput) : Promise<void> {
         const index = this.scenes.findIndex(scene => scene.id === id);
         if(index >= 0) {
@@ -273,43 +273,55 @@ export class MultiviewerApp {
             const db = AppDataBase.getInstance();
             await db.updateScene(this.scenes[index].scene);
 
-            logger.info(`Scene ${id} updated`);
+            // notify
+            const message = { message: "scene_list_change", action: "scene_input_added", uid: id, input_index: this.scenes[index].numInputs() - 1 };
+            broadcast(message);
+
+            logger.info(`Scene ${id} updated. Input ${input.id} added`);
         } else {
             throw Error(`Scene ${id} not found`);
         }
     }
 
-    public async updateInput(id: number, input: IInput) : Promise<void> {
+    public async updateInput(id: number, inputIndex: number, input: IInput) : Promise<void> {
         const index = this.scenes.findIndex(scene => scene.id === id);
         if(index >= 0) {
-            this.scenes[index].updateInput(input);
+            this.scenes[index].updateInput(inputIndex, input);
             
             // update from db
             const db = AppDataBase.getInstance();
             await db.updateScene(this.scenes[index].scene);
 
-            logger.info(`Scene ${id} updated`);
+            // notify
+            const message = { message: "scene_list_change", action: "scene_input_updated", uid: id, input_index: inputIndex };
+            broadcast(message);
+
+            logger.info(`Scene ${id} updated. Input ${input.id} updated`);
         } else {
             throw Error(`Scene ${id} not found`);
         }
     }
 
-    public async removeInput(id: number, inputId: number) : Promise<void> {
+    public async removeInput(id: number, inputIndex: number) : Promise<void> {
         const index = this.scenes.findIndex(scene => scene.id === id);
         if(index >= 0) {
-            this.scenes[index].removeInput(inputId);
+            this.scenes[index].removeInput(inputIndex);
             
             // update from db
             const db = AppDataBase.getInstance();
             await db.updateScene(this.scenes[index].scene);
 
-            logger.info(`Scene ${id} updated`);
+            // notify
+            const message = { message: "scene_list_change", action: "scene_input_removed", uid: id, input_index: inputIndex };
+            broadcast(message);
+
+            logger.info(`Scene ${id} updated. Input ${inputIndex} removed`);
         } else {
             throw Error(`Scene ${id} not found`);
         }
     }
 
-    // modify scene destinations
+    // scene output
     public async addOutput(id: number, output: IOutput) : Promise<void> {
         const index = this.scenes.findIndex(scene => scene.id === id);
         if(index >= 0) {
@@ -319,37 +331,49 @@ export class MultiviewerApp {
             const db = AppDataBase.getInstance();
             await db.updateScene(this.scenes[index].scene);
 
-            logger.info(`Scene ${id} updated`);
+            // notify
+            const message = { message: "scene_list_change", action: "scene_output_added", uid: id, output_index: this.scenes[index].numOutputs() - 1 };
+            broadcast(message);
+
+            logger.info(`Scene ${id} updated. Output ${output.id} added`);
         } else {
             throw Error(`Scene ${id} not found`);
         }
     }
 
-    public async updateOutput(id: number, output: IOutput) : Promise<void> {
+    public async updateOutput(id: number, outputIndex: number, output: IOutput) : Promise<void> {
         const index = this.scenes.findIndex(scene => scene.id === id);
         if(index >= 0) {
-            this.scenes[index].updateOutput(output);
+            this.scenes[index].updateOutput(outputIndex, output);
 
             // update from db
             const db = AppDataBase.getInstance();
             await db.updateScene(this.scenes[index].scene);
 
-            logger.info(`Scene ${id} updated`);
+            // notify
+            const message = { message: "scene_list_change", action: "scene_output_updated", uid: id, input_index: outputIndex };
+            broadcast(message);
+
+            logger.info(`Scene ${id} updated. Output ${outputIndex} updated`);
         } else {
             throw Error(`Scene ${id} not found`);
         }
     }
 
-    public async removeOutput(id: number, outputId: number) : Promise<void> {
+    public async removeOutput(id: number, outputIndex: number) : Promise<void> {
         const index = this.scenes.findIndex(scene => scene.id === id);
         if(index >= 0) {
-        this.scenes[index].removeOutput(outputId);
+        this.scenes[index].removeOutput(outputIndex);
 
             // update from db
             const db = AppDataBase.getInstance();
             await db.updateScene(this.scenes[index].scene);
 
-            logger.info(`Scene ${id} updated`);
+            // notify
+            const message = { message: "scene_list_change", action: "scene_input_removed", uid: id, input_index: outputIndex };
+            broadcast(message);
+
+            logger.info(`Scene ${id} updated. Output ${outputIndex} removed`);
         } else {
             throw Error(`Scene ${id} not found`);
         }

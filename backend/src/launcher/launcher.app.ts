@@ -1,6 +1,6 @@
 import { AppDataBase } from "../db";
 import { logger } from "../logger" 
-import { LauncherController } from "./launcher.controller";
+import { AppInfo, LauncherController } from "./launcher.controller";
 
 const db = AppDataBase.getInstance();
 
@@ -45,7 +45,7 @@ export class LauncherApp {
     // status
     public status(launcherID: number) {
         if(!this.launchers.has(launcherID)) {        
-            throw Error("");
+            throw Error(`Launcher ${launcherID} not found`);
         }
         return this.launchers.get(launcherID)?.getStatus();
     }
@@ -90,5 +90,64 @@ export class LauncherApp {
         });
 
         return ret;
+    }
+
+    public launcher(launcherId: number) {
+        return this.launchers.get(launcherId);
+    }
+
+    
+    // build schema like this with all available inputs schemas
+    // const schema = { "BlackMagic (SDI)" : {schema: {title: "", description: "", type: "object", required: [], properties: {id: {type: "number", title: "Id", default: -1, readOnly: true}, name: {type: "string", title: "Name", default: "Input name"}, type: {type: "string", title: "Type", default: "BlackMagic (SDI)", readOnly: true}}}},
+    //                  "NDI" : {schema: {title: "", description: "", type: "object", required: [], properties: {id: {type: "number", title: "Id", default: -1, readOnly: true}, name: {type: "string", title: "Name", default: "Input name"}, type: {type: "string", title: "Type", default: "NDI", readOnly: true}}}}
+    //                };
+    public getSchemas(launcherID: number, moduleType: string) {
+        const status = this.status(launcherID);
+        if(status == undefined) {
+            throw Error(""); 
+        }
+
+        // mergeSchemas contains all schemas for input
+        const filteredSchemas = status.availableSchemas.filter(schema => schema.app.indexOf(moduleType) >= 0);
+        return filteredSchemas?.reduce((acc, obj) => {
+          return { ...acc, ...obj.schema };
+        }, {});
+    }
+
+    // build json object like this, with all the configurations
+    // const engines = [ {id: 1, name: "Input#1", type:"BlackMagic (SDI)"}, {id: 2, name: "Input#2", type:"NDI"} ];
+    async getEngines(launcherID: number, moduleType: string) {
+        const launcher = this.launcher(launcherID);
+        if(!launcher) {
+            throw Error("");
+        }
+
+        const apps = await launcher.getApps();
+
+        var avaialbleApps: any [] = [];
+        for (const key of Object.keys(apps)) {
+            if(key.indexOf(moduleType) >= 0) {                
+                avaialbleApps = [...avaialbleApps, ...apps[key]];
+            }
+        }
+
+        return avaialbleApps;
+    }
+
+    public getAppModuleAppType(launcherID: number, moduleType: string, app: string) {
+        // launcher
+        const status = this.status(launcherID);
+        if(status == undefined) {
+            throw Error("Launcher status not found"); 
+        }
+
+        const filteredSchema = status.availableSchemas.find(schema => schema.app.indexOf(moduleType) >= 0 && schema.schema[app]);
+        if(!filteredSchema) {
+            throw Error("App not found");
+        }
+
+        console.log("3333");
+
+        return filteredSchema?.app;
     }
 }
