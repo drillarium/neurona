@@ -19,10 +19,47 @@ using namespace std::chrono_literals;
 
 const char APP_VERSION_STR[] = "0.0.1";
 
+const char SCHEMA[] = "schema";
+
 // getJsonSchema
 std::string getJsonSchema()
 {
-  return "{}";
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+
+  writer.StartObject();  // {
+
+  writer.Key("type");
+  writer.String("object");
+
+  writer.Key("title");
+  writer.String("");
+
+  writer.Key("description");
+  writer.String("");
+
+  // required
+  writer.Key("required");
+  writer.StartArray(); // [
+  writer.EndArray(); // ] // required
+
+  writer.Key("properties");
+  writer.StartObject(); // {
+
+  // schema
+  writer.Key(SCHEMA);
+  writer.StartObject(); // {
+  writer.Key("title");
+  writer.String("Schema");
+  writer.Key("type");
+  writer.String("string");
+  writer.EndObject(); // } // schems
+
+  writer.EndObject(); // } // properties
+
+  writer.EndObject(); // }
+
+  return buffer.GetString();
 }
 
 // getVersion
@@ -428,7 +465,13 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     return false;
   }
 
-  TTF_Font *font = TTF_OpenFont("../deps/common/Montserrat-Regular.ttf", 50);
+  int fontSize = 50;
+  TTF_Font *font = TTF_OpenFont("../deps/common/Montserrat-Regular.ttf", fontSize);
+  if(!font)
+  {
+    font = TTF_OpenFont("./Montserrat-Regular.ttf", fontSize);
+  }
+
   if(!font)
   {
     notifyError("Font loading failed: %s", TTF_GetError());

@@ -1,17 +1,22 @@
 import { AppDataBase } from "../db";
 import { logger } from "../logger" 
-import { AppInfo, LauncherController } from "./launcher.controller";
+import { LauncherController } from "./launcher.controller";
+import { Observable, Subject } from "rxjs";
 
 const db = AppDataBase.getInstance();
 
-// multiviewer app
+// Launcher app
 export class LauncherApp {
     // singleton
     private static instance: LauncherApp;
     // list of launchers
     private launchers: Map<number, LauncherController> = new Map<number, LauncherController>();
+    // connection subject
+    private connectionSubject: Subject<any>;
 
-    private constructor() {}
+    private constructor() {
+        this.connectionSubject = new Subject<any>();
+    }
 
     public static getInstance(): LauncherApp {
         if (!LauncherApp.instance) {
@@ -95,7 +100,6 @@ export class LauncherApp {
     public launcher(launcherId: number) {
         return this.launchers.get(launcherId);
     }
-
     
     // build schema like this with all available inputs schemas
     // const schema = { "BlackMagic (SDI)" : {schema: {title: "", description: "", type: "object", required: [], properties: {id: {type: "number", title: "Id", default: -1, readOnly: true}, name: {type: "string", title: "Name", default: "Input name"}, type: {type: "string", title: "Type", default: "BlackMagic (SDI)", readOnly: true}}}},
@@ -146,8 +150,16 @@ export class LauncherApp {
             throw Error("App not found");
         }
 
-        console.log("3333");
-
         return filteredSchema?.app;
+    }
+
+    // Subscribe to connection state change
+    public subscribeToConnection(): Observable<any> {
+        return this.connectionSubject.asObservable();
+    }
+
+    // notify
+    public notifyConnectionChange(status: any) : void {
+        this.connectionSubject.next(status);
     }
 }

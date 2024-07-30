@@ -2,6 +2,7 @@ import { AppDataBase } from "../db";
 import { logger } from "../logger";
 import { WebSocket } from 'ws';
 import { broadcast } from "../services/ws.service";
+import { LauncherApp } from "./launcher.app";
 
 // TODO: Move to a common place used by Launcher and Backend
 export interface AppInfo {
@@ -91,6 +92,9 @@ export class LauncherController {
             // connected
             this.connected_ = true;
 
+            // TODO: observers: Notify launcher running
+            LauncherApp.getInstance().notifyConnectionChange({launcher_uid: this.uid_, connected: true});
+
             // notify
             const message = { message: "launcher_status_change", "uid": this.uid_, "connected": true, status: this.getStatus() };
             broadcast(message);
@@ -103,6 +107,9 @@ export class LauncherController {
 
                 // connected
                 this.connected_ = false;
+
+                // TODO: Observers, notify lauchers not running
+                LauncherApp.getInstance().notifyConnectionChange({launcher_uid: this.uid_, connected: false});
 
                 // notify
                 const message = { message: "launcher_status_change", "uid": this.uid_, "connected": false, status: null };
@@ -142,6 +149,9 @@ export class LauncherController {
 
         // connected
         this.connected_ = false;
+
+        // TODO: Notify launchers not running
+        LauncherApp.getInstance().notifyConnectionChange({launcher_uid: this.uid_, connected: false});
 
         // notify
         const message = { message: "launcher_status_change", "uid": this.uid_, "connected": false, status: null };

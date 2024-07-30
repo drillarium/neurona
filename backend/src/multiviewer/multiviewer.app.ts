@@ -5,11 +5,13 @@ import { IInput, IOutput, IScene, LayoutScene } from "./scene";
 import * as fs from 'fs';
 import * as path from 'path';
 import { broadcast } from "../services/ws.service";
+import { Subscription } from "rxjs";
 
 // multiviewer app
 export class MultiviewerApp {
     private static instance: MultiviewerApp;
     private scenes: LayoutScene[] = [];
+    private connectionSubscription_!: Subscription;
 
     private constructor() {}
 
@@ -32,12 +34,35 @@ export class MultiviewerApp {
             logger.info(`Scene ${scene.id} loaded`);
         });
 
-        // run scenes
+        const connectionObserver = LauncherApp.getInstance().subscribeToConnection();
+        this.connectionSubscription_ = connectionObserver.subscribe((status: any) => {
+            const launcherUID: number = status.launcher_uid;
+            const connected: boolean = status.connected;
+            
+            // run scenes case connected or stop them case not running
+            this.scenes.forEach(scene => {
+                if(scene.launcherId == launcherUID) {
+                    if(connected) {
+                        // TODO
+
+                        logger.info(`Multiviewer app detects launcher ${launcherUID} running. ${scene.id} start running`);                        
+                    }
+                    else {
+                        // TODO
+
+                        logger.info(`Multiviewer app detects launcher ${launcherUID} not running. ${scene.id} stop running`);                        
+                    }
+                }        
+            });                  
+        });        
     }
 
     // deinit
     public deinit() {
         // unload
+        if(this.connectionSubscription_) {
+            this.connectionSubscription_.unsubscribe();
+        }
     }
 
     // JSON schema for GUI
@@ -159,7 +184,19 @@ export class MultiviewerApp {
             this.scenes.push(sceneLayout);
             logger.info(`Scene ${scene.id} loaded`);
 
-            // run scene
+            // TODO: start process if launcher is running
+            const launcherController = LauncherApp.getInstance().launcher(scene.launcherId);
+            if(!launcherController) {
+                throw Error("Launcher not found");
+            }
+            if(launcherController.connected) {
+                try {
+                    launcherController.addApp("mixer", scene);
+                }
+                catch(error) {
+                    throw error;
+                }
+            }
 
             // notify
             const message = { message: "scene_list_change", action: "scene_added", uid: scene.id };
@@ -205,9 +242,25 @@ export class MultiviewerApp {
             // remove from db
             const db = AppDataBase.getInstance();
             await db.deleteScene(this.scenes[index].id);
+            const sceneID = this.scenes[index].id;
+            const launcherId = this.scenes[index].launcherId;
 
             // remove
             this.scenes.splice(index, 1);
+
+            // stop process
+            const launcherController = LauncherApp.getInstance().launcher(launcherId);
+            if(!launcherController) {
+                throw Error("Launcher not found");
+            }
+            if(launcherController.connected) {
+                try {        
+                    launcherController.deleteApp("mixer", sceneID);
+                }
+                catch(error) {
+                    throw error;
+                }
+            }            
 
             logger.info(`Scene ${id} removed`);
 
@@ -230,8 +283,22 @@ export class MultiviewerApp {
             const db = AppDataBase.getInstance();
             await db.updateScene(scene);
 
-            // remove
+            // update
             this.scenes[index].init(scene);
+
+            // update scene
+            const launcherController = LauncherApp.getInstance().launcher(this.scenes[index].launcherId);
+            if(!launcherController) {
+                throw Error("Launcher not found");
+            }
+            if(launcherController.connected) {
+                try {            
+                    launcherController.runAppCommand(this.scenes[index].id.toString(), "play_scene", this.scenes[index].scene);
+                }
+                catch(error) {
+                    throw error;
+                }
+            }
 
             logger.info(`Scene ${scene.id} updated`);
 

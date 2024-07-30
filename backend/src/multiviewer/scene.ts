@@ -44,6 +44,10 @@ export class LayoutScene {
         return this.scene.id;
     }
 
+    public get launcherId() : number {
+        return this.scene.launcherId;
+    }
+
     public get scene(): IScene {
         return this.scene_!;
     }
