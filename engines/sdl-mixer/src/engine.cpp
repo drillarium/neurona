@@ -19,6 +19,8 @@ using namespace std::chrono_literals;
 
 const char APP_VERSION_STR[] = "0.0.1";
 
+const char UID[] = "id";
+const char NAME_[] = "name";
 const char SCHEMA[] = "schema";
 
 // getJsonSchema
@@ -41,10 +43,32 @@ std::string getJsonSchema()
   // required
   writer.Key("required");
   writer.StartArray(); // [
+  writer.String(UID);
+  writer.String(NAME_);
   writer.EndArray(); // ] // required
 
   writer.Key("properties");
   writer.StartObject(); // {
+
+  // uid
+  writer.Key(UID);
+  writer.StartObject(); // {
+  writer.Key("title");
+  writer.String("ID");
+  writer.Key("type");
+  writer.String("number");
+  writer.Key("readOnly");
+  writer.Bool(true);
+  writer.EndObject(); // } // id
+
+  // name
+  writer.Key(NAME_);
+  writer.StartObject(); // {
+  writer.Key("title");
+  writer.String("Name");
+  writer.Key("type");
+  writer.String("string");
+  writer.EndObject(); // } // name
 
   // schema
   writer.Key(SCHEMA);
@@ -192,6 +216,7 @@ const char SHOW[] = "show";
 const char XPOS[] = "x";
 const char YPOS[] = "y";
 const char NAME[] = "name";
+const char INPUTS[] = "inputs";
 
 EViewType string2type(const char *_type)
 {
@@ -207,6 +232,82 @@ EViewType string2type(const char *_type)
   return EViewType::VT__VIDEO;
 }
 
+SMultiviewerCongif* parseScene(const char* _JsonConfig)
+{
+  rapidjson::Document d;
+  d.Parse(_JsonConfig);
+  if(d.HasParseError())
+  {
+    notifyError("Error parsing configuration: %s", _JsonConfig);
+    return NULL;
+  }
+
+  SMultiviewerCongif* mvc = new SMultiviewerCongif;
+  if(d.HasMember(WIDTH) || d[WIDTH].IsInt())
+  {
+    mvc->width = d[WIDTH].GetInt();
+  }
+
+  if(d.HasMember(HEIGHT) || d[HEIGHT].IsInt())
+  {
+    mvc->height = d[HEIGHT].GetInt();
+  }
+
+  // TODO
+  AVRational fr = parseFR("25/1");
+  mvc->timeBase.num = fr.den;
+  mvc->timeBase.den = fr.num;
+
+  // TODO
+  mvc->format = strig2format("RGB24");
+
+  // TODO
+  mvc->fieldOrder = strig2fieldorder("PROGRESSIVE");
+
+  if (d.HasMember(INPUTS) && d[INPUTS].IsArray())
+  {
+    auto inputAr = d[INPUTS].GetArray();
+    for(rapidjson::Value::ConstValueIterator it = inputAr.Begin(); it != inputAr.End(); it++)
+    {
+      SMultiviewerView *mvv = new SMultiviewerVideoView;
+      mvv->type = EViewType::VT__VIDEO;
+      mvc->viewer.push_back(mvv);
+
+      if(it->HasMember("x"))
+      {
+        mvv->x = (*it) ["x"].GetInt();
+      }
+
+      if(it->HasMember("y"))
+      {
+        mvv->y = (*it) ["y"].GetInt();
+      }
+
+      if(it->HasMember(UID))
+      {
+        mvv->UID = (*it)[UID].GetInt();
+      }
+
+      if(it->HasMember(NAME))
+      {
+        mvv->name = (*it)[NAME].GetString();
+      }
+
+      if(it->HasMember(WIDTH))
+      {
+        mvv->w = (*it) [WIDTH].GetInt();
+      }
+
+      if(it->HasMember(HEIGHT))
+      {
+        mvv->h = (*it) [HEIGHT].GetInt();
+      }   
+    }
+  }
+
+  return mvc;
+}
+
 SMultiviewerCongif * parseMultiviewerConfig(const char *_JsonConfig)
 {
   rapidjson::Document d;
@@ -219,8 +320,12 @@ SMultiviewerCongif * parseMultiviewerConfig(const char *_JsonConfig)
 
   if(!d.HasMember(WINLAY) || !d[WINLAY].IsObject())
   {
-    notifyError("Invalid configuration: %s", _JsonConfig);
-    return NULL;
+    SMultiviewerCongif *scene = parseScene(_JsonConfig);
+    if(!scene)
+    {
+      notifyError("Invalid configuration: %s", _JsonConfig);
+    }
+    return scene;
   }
   
   SMultiviewerCongif *mvc = new SMultiviewerCongif;
@@ -447,6 +552,36 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
+bool SDLMixerEngine::loadConfiguration(const char* _JsonConfig)
+{
+  rapidjson::Document d;
+  d.Parse(_JsonConfig);
+  if(d.HasParseError())
+  {
+    notifyError("Error parsing configuration: %s", _JsonConfig);
+    return false;
+  }
+
+  if(!d.IsObject())
+  {
+    notifyError("Invalid configuration: %s", _JsonConfig);
+    return false;
+  }
+
+  if(d.HasMember(UID) && d[UID].IsString())
+  {
+    UID_ = d[UID].GetString();
+  }
+
+  if(d.HasMember(SCHEMA) && d[SCHEMA].IsString())
+  {
+    std::lock_guard<std::mutex> lock(nextConfigurationMutex_);
+    nextConfiguration_.push_back(d[SCHEMA].GetString());
+  }
+
+  return true;
+}
+
 // run. Main thread generates black and silence while stream does not generate AVsamples
 bool SDLMixerEngine::run(const char *_JsonConfig)
 {
@@ -479,6 +614,18 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
     return false;
   }
 
+  // print version info
+  notifyInfo("Version: %s", getVersion().c_str());
+  notifyInfo("Schema: %s", getJsonSchema().c_str());
+  notifyInfo("Configuration: %s", _JsonConfig);
+
+  // load configuration
+  if(!loadConfiguration(_JsonConfig))
+  {
+    notifyError("Could not load configuration");
+    return false;
+  }
+
   // surface
   SDL_Surface *surface = nullptr;
   AVFrame *videoFrame = nullptr;
@@ -503,15 +650,25 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
   std::vector<std::thread> producerThread;
 
   // initialize configuration
-  nextConfiguration_ = DEFAULT_CONFIG;
-  configure_ = true;
+#ifdef _DEBUG
+  nextConfiguration_.push_back(DEFAULT_CONFIG);
+#endif
   SMultiviewerCongif *config = NULL;
+  std::string nextConfiguration;
 
   while(!abort_)
   {
-    if(configure_)
-    {     
-      SMultiviewerCongif *nextConfig = parseMultiviewerConfig(nextConfiguration_.c_str());
+    nextConfigurationMutex_.lock();
+    size_t size = nextConfiguration_.size();
+    nextConfigurationMutex_.unlock();
+    if(size > 0)
+    {
+      nextConfigurationMutex_.lock();
+      nextConfiguration = nextConfiguration_[size - 1].c_str();
+      SMultiviewerCongif *nextConfig = parseMultiviewerConfig(nextConfiguration.c_str());
+      nextConfiguration_.clear();
+      nextConfigurationMutex_.unlock();
+
       if(nextConfig)
       {
         // FFMPEG
@@ -559,9 +716,8 @@ bool SDLMixerEngine::run(const char *_JsonConfig)
           free_config(config);
         }
         config = nextConfig;
-        currentConfiguration_ = nextConfiguration_;
-        nextConfiguration_.clear();
-        configure_ = false;
+        currentConfiguration_ = nextConfiguration;
+        nextConfiguration.clear();
 
         // 
         for(size_t i = 0; i < producerThread.size(); i++)
