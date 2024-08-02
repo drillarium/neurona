@@ -3,14 +3,17 @@ import * as path from 'path';
 import { AppConfig } from '../config';
 import { logger } from '../logger';
 import { spawn, ChildProcess } from 'child_process';
+import { WebSocketService } from '../services/ws.service';
+import { Subscription } from 'rxjs';
 
 interface AppInfo {
   type: string;         // "ffmpeg-input"
   id: number;
   name: string;
-  appid: string;        // client app that creates the app
-  appuid: string;       // client app uid
-  appsession: string;   // client app session
+  // appid: string;        // client app that creates the app
+  // appuid: string;       // client app uid
+  // appsession: string;   // client app session
+  session: string;
   running: boolean;
 }
 
@@ -33,6 +36,7 @@ export class AppController {
   private static instance: AppController;
   private appDirectory: string = "";
   private apps_: Map<string, AppRunningInfo> = new Map<string, AppRunningInfo>();
+  private sessionEndsSubscription_!: Subscription;
 
   private constructor() {
   }
@@ -57,6 +61,16 @@ export class AppController {
     // run autostart ones
     this.autostart();
 
+    // observer websocket connection lost    
+    const sessionEndsObserver = WebSocketService.getInstance().subscribeToSessionEnds();
+    this.sessionEndsSubscription_ = sessionEndsObserver.subscribe((session: string) => {        
+    this.apps_.forEach(app => {
+      if(app.appInfo.session == session) {
+        this.deleteApplication(app.appInfo.type, app.appInfo.id.toString());
+      }
+    });
+    });
+
     return true;
   }
 
@@ -72,9 +86,14 @@ export class AppController {
 
     // clear app map
     this.apps_ = new Map<string, AppRunningInfo>();
+
+    // unload
+    if(this.sessionEndsSubscription_) {
+      this.sessionEndsSubscription_.unsubscribe();
+    }
   }
 
-  // singleton insance
+  // singleton instance
   public static getInstance(): AppController {
     if(!AppController.instance) {
       AppController.instance = new AppController();
@@ -147,13 +166,13 @@ export class AppController {
     }
   }
 
-  protected registerApp(subfolderPath: string, file: string, appType: string) {
+  protected registerApp(subfolderPath: string, file: string, appType: string, session: string = "") {
     const filePath = path.join(subfolderPath, file);
 
     try {
       // Read JSON file and extract name and uid
       const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      const { name, id, appid, appuid, appsession, autostart } = jsonData;
+      const { name, id, /* appid, appuid, appsession,*/ autostart } = jsonData;
 
       const program = `${subfolderPath}\\${appType}.exe`;
       const args = ["-c", file];
@@ -162,15 +181,16 @@ export class AppController {
               type: appType,
               name: name,
               id: id,
-              appid: appid,
-              appuid: appuid,
-              appsession: appsession,
+              // appid: appid,
+              // appuid: appuid,
+              // appsession: appsession,
+              session: session,
               running: false                                      
           },
           autostart: autostart,                    
           program: program,
           args: args,   
-          config: jsonData, 
+          config: jsonData,
           status: null,
           process: null,
           kill: false     
@@ -190,7 +210,7 @@ export class AppController {
   // check autostart flag
   protected autostart() {
     this.apps_.forEach(app => {
-      if(app.autostart) {
+      if(app.autostart && (!app.appInfo.session || app.appInfo.session.length == 0)) {
         this.startApp(app);
       }
     });
@@ -441,7 +461,7 @@ export class AppController {
   }
 
   // create configuration
-  public createConfiguration(appid: string, newConfig: any) {
+  public createConfiguration(appid: string, newConfig: any, session: string) {
     const appuid = `${appid}####${newConfig.id}`;
     const configFileName = `${newConfig.id}.json`;
     var result: boolean = false;
@@ -455,7 +475,7 @@ export class AppController {
         logger.info(`Configuration file ${configFile} saved. ${JSON.stringify(newConfig)}`);        
 
         // register app
-        this.registerApp(this.appDirectory, configFileName, appid);
+        this.registerApp(this.appDirectory, configFileName, appid, session);
 
         // case autostart, run it
         var app = this.apps_.get(appuid);

@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
 import { logger } from "../logger";
+import { Observable, Subject } from "rxjs";
 
 export class WebSocketService {
     // singleton instance
@@ -8,9 +9,12 @@ export class WebSocketService {
     private wss_?: WebSocketServer;
     // sessions
     private sessions_: Map<string, any> = new Map<string, any>();
+    // connection subject
+    private sessionSubject: Subject<string>;
 
     // Private constructor prevents instantiation outside of this class.
     private constructor() { 
+        this.sessionSubject = new Subject<string>();
     }
     
     // Return the only instance
@@ -36,8 +40,11 @@ export class WebSocketService {
             ws.on('close', () => {
                 // unregister
                 if (this.sessions_.has(session)) {
-                    logger.info(`WebSocket connection closing sessions ${session}`);
+                    logger.info(`WebSocket connection closing session ${session}`);
                     this.sessions_.delete(session);
+
+                    // kill session engines
+                    this.notifySessionEnds(session);
                 }
                 else {
                     logger.info(`WebSocket connection close`);
@@ -53,7 +60,17 @@ export class WebSocketService {
                 client.send(messageStr);
             });
         }
-    }   
+    }
+
+    // Subscribe to connection state change
+    public subscribeToSessionEnds(): Observable<string> {
+        return this.sessionSubject.asObservable();
+    }
+
+    // notify
+    public notifySessionEnds(session: string) : void {
+        this.sessionSubject.next(session);
+    }
 }
 
 export function broadcast(_message: any) {

@@ -134,9 +134,29 @@ appsRouter.delete("/:appid/:appuid", async(req: Request, res: Response) => {
 appsRouter.post("/:appid", async(req: Request, res: Response) => {
   const appid = req?.params?.appid;
   const newConfig = req.body;
+  const session = "";
 
   try {
-    const { result, error } = appController.createConfiguration(appid, newConfig);
+    const { result, error } = appController.createConfiguration(appid, newConfig, session);
+    if(!result) {
+      throw new Error(error); 
+    }
+    res.status(200).send();
+  }
+  catch(error: any) {
+    logger.error(`POST "/:appid" ${JSON.stringify(error)}`);
+    res.status(400).send(error.message);
+  }
+});
+
+// POST app
+appsRouter.post("/:appid/:session", async(req: Request, res: Response) => {
+  const appid = req?.params?.appid;
+  const newConfig = req.body;
+  const session = req?.params?.session;
+
+  try {
+    const { result, error } = appController.createConfiguration(appid, newConfig, session);
     if(!result) {
       throw new Error(error);
     }

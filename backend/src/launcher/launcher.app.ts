@@ -35,7 +35,7 @@ export class LauncherApp {
                 const l = new LauncherController;    
                 this.launchers.set(launcher.id, l);
                 l.init(launcher.id, appUID, sessionUID, launcher.address);
-            });            
+            });
         });
     }
 

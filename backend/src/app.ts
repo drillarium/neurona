@@ -76,7 +76,7 @@ const server = app.listen(PORT, INTERFACE, async () => {
     launcherApps.init(UID, session);
 
     // wait available scenes loaded from db
-    await multiviewerApp.init();
+    await multiviewerApp.init(session);
 
     // create websocket
     const wss : WebSocketService = WebSocketService.getInstance();

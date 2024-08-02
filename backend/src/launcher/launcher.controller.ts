@@ -266,9 +266,9 @@ export class LauncherController {
     }
 
     // add application
-    public async addApp(appID: string, config: any) : Promise<void> {
+    public async addApp(appID: string, config: any, sessionUID: string) : Promise<void> {
         try {
-            const uri = this.address_ + "/api/v1/apps/" + appID;
+            const uri = this.address_ + "/api/v1/apps/" + appID + `/${sessionUID}`;
             const response = await fetch(uri, {
                 method: 'POST',
                 headers: {

@@ -12,6 +12,7 @@ export class MultiviewerApp {
     private static instance: MultiviewerApp;
     private scenes: LayoutScene[] = [];
     private connectionSubscription_!: Subscription;
+    private sessionUID: string = "";
 
     private constructor() {}
 
@@ -23,7 +24,11 @@ export class MultiviewerApp {
     }
 
     // init
-    public async init() {
+    public async init(sessionUID: string) {
+        logger.info(`Multiviewer app init`);
+
+        this.sessionUID = sessionUID;
+
         // load sencenes
         const db = AppDataBase.getInstance();
         const scenes = await db.loadScenes();
@@ -32,8 +37,16 @@ export class MultiviewerApp {
             ls.init(scene);
             this.scenes.push(ls);
             logger.info(`Scene ${scene.id} loaded`);
-        });
 
+            try {
+                this.startScene(scene); 
+            }
+            catch(error) {
+                logger.warn(`Scene ${scene.id} cannot be started. ${error}`);
+            }
+        });        
+
+        // detect launcher running / not running
         const connectionObserver = LauncherApp.getInstance().subscribeToConnection();
         this.connectionSubscription_ = connectionObserver.subscribe((status: any) => {
             const launcherUID: number = status.launcher_uid;
@@ -43,7 +56,7 @@ export class MultiviewerApp {
             this.scenes.forEach(scene => {
                 if(scene.launcherId == launcherUID) {
                     if(connected) {
-                        // TODO
+                        this.startScene(scene.scene);
 
                         logger.info(`Multiviewer app detects launcher ${launcherUID} running. ${scene.id} start running`);                        
                     }
@@ -184,18 +197,12 @@ export class MultiviewerApp {
             this.scenes.push(sceneLayout);
             logger.info(`Scene ${scene.id} loaded`);
 
-            // TODO: start process if launcher is running
-            const launcherController = LauncherApp.getInstance().launcher(scene.launcherId);
-            if(!launcherController) {
-                throw Error("Launcher not found");
+            // start process if launcher is running
+            try {
+                this.startScene(scene); 
             }
-            if(launcherController.connected) {
-                try {
-                    launcherController.addApp("mixer", scene);
-                }
-                catch(error) {
-                    throw error;
-                }
+            catch(error) {
+                logger.warn(`Scene ${scene.id} cannot be started. ${error}`);
             }
 
             // notify
@@ -207,6 +214,35 @@ export class MultiviewerApp {
         }
 
         return scene;
+    }
+
+    protected startScene(scene : IScene) {
+        const launcherController = LauncherApp.getInstance().launcher(scene.launcherId);
+        if(!launcherController) {
+            throw Error(`Launcher ${scene.launcherId} not found`);
+        }
+        if(launcherController.connected) {
+            // MIXER
+            try {
+                const config = {
+                    title: "",
+                    name: "",
+                    id: scene.id,
+                    autostart: true, // create app and start it
+                    scene: scene
+                };
+
+                launcherController.addApp("sdl-mixer", config, this.sessionUID);
+            }
+            catch(error) {
+                throw error;
+            }
+
+            // OUTPUTS
+        }
+        else {
+            throw Error(`Launcher ${scene.launcherId} not running`);
+        }
     }
 
     // add scene
@@ -255,7 +291,7 @@ export class MultiviewerApp {
             }
             if(launcherController.connected) {
                 try {        
-                    launcherController.deleteApp("mixer", sceneID);
+                    launcherController.deleteApp("sdl-mixer", sceneID);
                 }
                 catch(error) {
                     throw error;
