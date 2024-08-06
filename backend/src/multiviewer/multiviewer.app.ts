@@ -32,31 +32,38 @@ export class MultiviewerApp {
         // load sencenes
         const db = AppDataBase.getInstance();
         const scenes = await db.loadScenes();
-        scenes.forEach(scene => {
+        for(var i = 0; i < scenes.length; i++) {
+            const scene = scenes[i];
             const ls = new LayoutScene;
             ls.init(scene);
             this.scenes.push(ls);
             logger.info(`Scene ${scene.id} loaded`);
 
             try {
-                this.startScene(scene); 
+                await this.startScene(scene); 
             }
             catch(error) {
                 logger.warn(`Scene ${scene.id} cannot be started. ${error}`);
             }
-        });        
+        }        
 
         // detect launcher running / not running
         const connectionObserver = LauncherApp.getInstance().subscribeToConnection();
-        this.connectionSubscription_ = connectionObserver.subscribe((status: any) => {
+        this.connectionSubscription_ = connectionObserver.subscribe(async (status: any) => {
             const launcherUID: number = status.launcher_uid;
             const connected: boolean = status.connected;
             
             // run scenes case connected or stop them case not running
-            this.scenes.forEach(scene => {
+            for(var i = 0; i < this.scenes.length; i++) {
+                const scene = this.scenes[i];
                 if(scene.launcherId == launcherUID) {
                     if(connected) {
-                        this.startScene(scene.scene);
+                        try {
+                            await this.startScene(scene.scene);
+                        }
+                        catch(error) {
+                            logger.warn(`Scene ${scene.id} cannot be started. ${error}`);
+                        }
 
                         logger.info(`Multiviewer app detects launcher ${launcherUID} running. ${scene.id} start running`);                        
                     }
@@ -65,8 +72,8 @@ export class MultiviewerApp {
 
                         logger.info(`Multiviewer app detects launcher ${launcherUID} not running. ${scene.id} stop running`);                        
                     }
-                }        
-            });                  
+                }
+            }                
         });        
     }
 
@@ -199,7 +206,7 @@ export class MultiviewerApp {
 
             // start process if launcher is running
             try {
-                this.startScene(scene); 
+                await this.startScene(scene); 
             }
             catch(error) {
                 logger.warn(`Scene ${scene.id} cannot be started. ${error}`);
@@ -216,7 +223,7 @@ export class MultiviewerApp {
         return scene;
     }
 
-    protected startScene(scene : IScene) {
+    protected async startScene(scene : IScene) {
         const launcherController = LauncherApp.getInstance().launcher(scene.launcherId);
         if(!launcherController) {
             throw Error(`Launcher ${scene.launcherId} not found`);
@@ -232,7 +239,7 @@ export class MultiviewerApp {
                     scene: scene
                 };
 
-                launcherController.addApp("sdl-mixer", config, this.sessionUID);
+                await launcherController.addApp("sdl-mixer", config, this.sessionUID);
             }
             catch(error) {
                 throw error;

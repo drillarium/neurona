@@ -266,7 +266,7 @@ export class LauncherController {
     }
 
     // add application
-    public async addApp(appID: string, config: any, sessionUID: string) : Promise<void> {
+    public async addApp(appID: string, config: any, sessionUID: string = "") : Promise<void> {
         try {
             const uri = this.address_ + "/api/v1/apps/" + appID + `/${sessionUID}`;
             const response = await fetch(uri, {
@@ -280,7 +280,7 @@ export class LauncherController {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-            if (response.status === 200) {
+            else if (response.status === 200) {
                 return;
             }
             else {
